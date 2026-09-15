@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Examples/" />
+  <Folder Name="/Sources/">
+    <Project Path="Sources/Grekov.Readers.Json/Grekov.Readers.Json.csproj" />
+    <Project Path="Sources/Grekov.Readers.Toml/Grekov.Readers.Toml.csproj" />
+    <Project Path="Sources/Grekov.Readers.Xml/Grekov.Readers.Xml.csproj" />
+    <Project Path="Sources/Grekov/Grekov.csproj" />
+  </Folder>
+  <Folder Name="/Tests/" />
+</Solution>
