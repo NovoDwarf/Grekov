@@ -61,6 +61,6 @@ internal sealed class DefReaderRegistry
 
         var normalized = extension.Trim();
 
-        return normalized.StartsWith('.', StringComparison.Ordinal) ? normalized : $".{normalized}";
+        return normalized.StartsWith(".", StringComparison.Ordinal) ? normalized : $".{normalized}";
     }
 }

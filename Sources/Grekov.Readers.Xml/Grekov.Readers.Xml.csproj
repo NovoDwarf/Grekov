@@ -1,15 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net11.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Title>Grekov.Readers.Xml</Title>
-        <Authors>NovoDwarf</Authors>
+        <TargetFrameworks>$(ProjectTargetFrameworks)</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Grekov" Version="1.0.0" />
+      <PackageReference Include="Grekov" Version="1.0.1-dev1" />
     </ItemGroup>
+    
 </Project>

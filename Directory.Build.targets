@@ -1,27 +1,35 @@
 <Project>
+
     <PropertyGroup>
         <LocalNugetRepository>F:\nugets</LocalNugetRepository>
-        <NugetArtifacts>$(MSBuildProjectDirectory)\bin\$(Configuration)\$(TargetFramework)\nuget</NugetArtifacts>
+        <NugetArtifacts>$(MSBuildProjectDirectory)\bin\$(Configuration)</NugetArtifacts>
     </PropertyGroup>
+    
+    <Target Name="PublishLocalNuget" AfterTargets="Build" Condition=" '$(IsPackable)' == 'true' and '$(Configuration)' == 'Debug' and '$(TargetFramework)' == 'net11.0'">
 
-    <Target Name="PublishLocalNuget" AfterTargets="Build" Condition="'$(IsPackable)' == 'true' and '$(Configuration)' == 'Debug'">
+        <PropertyGroup>
+            <LocalPackageRepository>$(LocalNugetRepository)\$(PackageId)</LocalPackageRepository>
+        </PropertyGroup>
+        
+        <Message Text="Publishing $(PackageId) $(Version) to local NuGet repository..." Importance="High" />
 
-        <Message Text="Publishing $(PackageId) to local NuGet repository..."
-                Importance="High" />
+        <MakeDir Directories="$(LocalPackageRepository)" />
 
-        <Exec Command="dotnet pack &quot;$(MSBuildProjectFullPath)&quot; --no-build --configuration $(Configuration) --output &quot;$(NugetArtifacts)&quot; -p:PackageVersion=$(Version) -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg" />
+        <Exec Command="dotnet pack &quot;$(MSBuildProjectFullPath)&quot; --no-build --no-restore --configuration $(Configuration) --output &quot;$(NugetArtifacts)&quot; -p:PackageVersion=$(Version) -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg" />
 
         <ItemGroup>
-            <LocalPackages Include="$(NugetArtifacts)\*.nupkg" />
-            <LocalSymbols Include="$(NugetArtifacts)\*.snupkg" />
+            <LocalPackages Include="$(NugetArtifacts)\$(PackageId).$(Version).nupkg" />
+            <LocalSymbols Include="$(NugetArtifacts)\$(PackageId).$(Version).snupkg" />
         </ItemGroup>
-
-        <Copy SourceFiles="@(LocalPackages)"
-                DestinationFolder="$(LocalNugetRepository)"
+        
+        <Copy
+                SourceFiles="@(LocalPackages)"
+                DestinationFolder="$(LocalPackageRepository)"
                 SkipUnchangedFiles="false" />
 
-        <Copy SourceFiles="@(LocalSymbols)"
-                DestinationFolder="$(LocalNugetRepository)"
+        <Copy
+                SourceFiles="@(LocalSymbols)"
+                DestinationFolder="$(LocalPackageRepository)"
                 SkipUnchangedFiles="false" />
 
     </Target>
