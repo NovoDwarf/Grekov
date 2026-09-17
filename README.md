@@ -8,6 +8,8 @@ The framework is designed to simplify the creation of modular applications where
 > [!WARNING]
 > This project was created for educational purposes and is still under development. It may contain bugs, incomplete features, and architectural flaws. The code is not production-ready and should be used with caution.
 
+Grekov is named after **Mitrofan Borisovich Grekov**, a Russian painter known for his works depicting military and historical subjects. Learn more about Mitrofan Grekov on [Wikipedia](https://en.wikipedia.org/wiki/Mitrofan_Grekov).
+
 ## Features
 
 - Package Management — discover and manage application packages from configured directories.
