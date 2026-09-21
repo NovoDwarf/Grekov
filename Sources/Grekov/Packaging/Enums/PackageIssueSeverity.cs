@@ -1,4 +1,4 @@
-namespace Grekov.Core.Enums;
+namespace Grekov.Packaging.Enums;
 
 public enum PackageIssueSeverity
 {

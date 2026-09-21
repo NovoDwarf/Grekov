@@ -1,5 +1,6 @@
 using System.Xml.Serialization;
 using Grekov.Core.Enums;
+using Grekov.Packaging.Enums;
 
 namespace Grekov.Packaging.Entities;
 

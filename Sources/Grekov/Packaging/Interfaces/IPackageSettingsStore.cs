@@ -1,6 +1,6 @@
 namespace Grekov.Packaging.Interfaces;
 
-public interface IPackageLoadOrderStore
+public interface IPackageSettingsStore
 {
 	IReadOnlyDictionary<string, bool> LoadEnabledOverrides();
 }

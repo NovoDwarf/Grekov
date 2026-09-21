@@ -7,5 +7,6 @@ public interface IPackageService
 	public IReadOnlyList<PackageInstance> Packages { get; }
 	public IReadOnlyList<PackageInstance> LoadOrder { get; }
 
-	public void LoadAll();
+	public Task Load(CancellationToken token = default);
+	public Task Unload(CancellationToken token = default);
 }
