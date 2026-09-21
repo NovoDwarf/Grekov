@@ -1,20 +1,17 @@
 using Grekov.Definitions.Interfaces;
-using NovoDwarf.FS.Interfaces;
+using NovoDwarf.FS.Paths.Interfaces;
 
 namespace Grekov.Definitions.Registry;
 
-internal sealed class DefReaderRegistry
+internal sealed class DefReaderRegistry : IDefReaderRegistry
 {
     private readonly IReadOnlyList<IDefFormatReader> _readers;
     private readonly Dictionary<string, IDefFormatReader> _readersByExtension;
-    private readonly IPathService _pathService;
+    private readonly IPathParser _pathParser;
 
-    public DefReaderRegistry(IEnumerable<IDefFormatReader> readers, IPathService pathService)
+    public DefReaderRegistry(IEnumerable<IDefFormatReader> readers, IPathParser pathParser)
     {
-        ArgumentNullException.ThrowIfNull(readers);
-        ArgumentNullException.ThrowIfNull(pathService);
-
-        _pathService = pathService;
+        _pathParser = pathParser;
         
         _readers = [.. readers];
         _readersByExtension = new Dictionary<string, IDefFormatReader>(StringComparer.OrdinalIgnoreCase);
@@ -29,7 +26,7 @@ internal sealed class DefReaderRegistry
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
-        var extension = _pathService.GetExtension(path);
+        var extension = _pathParser.GetExtension(path);
 
         if (!string.IsNullOrWhiteSpace(extension))
             return _readersByExtension.TryGetValue(NormalizeExtension(extension), out reader);

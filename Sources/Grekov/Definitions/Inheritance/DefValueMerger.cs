@@ -7,18 +7,20 @@ internal sealed class DefValueMerger
 {
 	public IReadOnlyDictionary<string, DefValue> Merge(IReadOnlyDictionary<string, DefValue> parent, IReadOnlyDictionary<string, DefValue> child)
 	{
+		ArgumentNullException.ThrowIfNull(parent);
+		ArgumentNullException.ThrowIfNull(child);
+
 		var result = new Dictionary<string, DefValue>(parent, StringComparer.OrdinalIgnoreCase);
 
-		foreach (var (key, childValue) in child)
+		foreach (var (name, childValue) in child)
 		{
-			if (result.TryGetValue(key, out var parentValue))
+			if (!result.TryGetValue(name, out var parentValue))
 			{
-				result[key] = MergeValue(parentValue, childValue);
+				result.Add(name, childValue);
+				continue;
 			}
-			else
-			{
-				result[key] = childValue;
-			}
+
+			result[name] = MergeValue(parentValue, childValue);
 		}
 
 		return result;
@@ -26,15 +28,11 @@ internal sealed class DefValueMerger
 
 	private DefValue MergeValue(DefValue parent, DefValue child)
 	{
-		if (child.Kind == DefValueKind.Null)
+		if (child.Kind == DefValueKind.Null || parent.Kind != DefValueKind.Object || child.Kind != DefValueKind.Object)
 			return child;
 
-		if (parent.Kind != DefValueKind.Object || child.Kind != DefValueKind.Object) 
-			return child;
-		
 		var merged = Merge(parent.Object!, child.Object!);
 
 		return DefValue.ObjectValue(merged);
-
 	}
 }

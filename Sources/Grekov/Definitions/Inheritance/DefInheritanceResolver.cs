@@ -31,12 +31,7 @@ internal sealed class DefInheritanceResolver
 
 		return resolved;
 	}
-
-	public void ClearCache()
-	{
-		_cache.Clear();
-	}
-
+	
 	private DefRaw ResolveInternal(DefRaw raw, HashSet<DefId> resolving)
 	{
 		if (_cache.TryGetValue(raw.Id, out var cached))
@@ -65,7 +60,7 @@ internal sealed class DefInheritanceResolver
 			var result = new DefRaw
 			{
 				Id = raw.Id,
-				TypeName = raw.TypeName,
+				Type = raw.Type,
 				ParentId = raw.ParentId,
 				Fields = mergedFields,
 				PackageId = raw.PackageId,

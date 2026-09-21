@@ -1,38 +1,30 @@
 using Grekov.Definitions.Interfaces;
 using Grekov.Definitions.Registry;
 using Grekov.Packaging.Entities;
-using NovoDwarf.FS.Interfaces;
+using Grekov.Packaging.Enums;
 
 namespace Grekov.Definitions.Scanning;
 
 internal sealed class DefScanner
 {
-	private readonly DefReaderRegistry _readers;
-	private readonly IFileService _file;
+	private readonly IDefReaderRegistry _readers;
 
-	public DefScanner(DefReaderRegistry readers, IFileService file)
+	public DefScanner(IDefReaderRegistry readers)
 	{
-		ArgumentNullException.ThrowIfNull(readers);
-		ArgumentNullException.ThrowIfNull(file);
-
 		_readers = readers;
-		_file = file;
 	}
 
 	public IReadOnlyList<(string Path, IDefFormatReader Reader)> Scan(PackageInstance package)
 	{
 		ArgumentNullException.ThrowIfNull(package);
 
-		if (!_file.DirectoryExists(package.DefinitionsPath))
-			return [];
-
 		var result = new List<(string Path, IDefFormatReader Reader)>();
 
-		foreach (var path in _file.EnumerateFiles(package.DefinitionsPath, "*", SearchOption.AllDirectories))
+		foreach (var path in package.Content.EnumerateFiles(PackageContentType.Definition))
 		{
 			if (_readers.TryResolve(path, out var reader))
 			{
-				result.Add((path, reader));
+				result.Add((path, reader!));
 			}
 		}
 

@@ -7,27 +7,27 @@ internal sealed class DefRawIndex
 {
     private readonly Dictionary<DefId, DefRaw> _definitions = new();
 
-    public IEnumerable<DefRaw> All => _definitions.Values;
+    public IReadOnlyCollection<DefRaw> All => _definitions.Values;
 
     public int Count => _definitions.Count;
 
-    public void Add(DefRaw def)
+    public void Add(DefRaw definition)
     {
-        ArgumentNullException.ThrowIfNull(def);
+        ArgumentNullException.ThrowIfNull(definition);
 
-        if (!_definitions.TryAdd(def.Id, def))
-            throw new InvalidOperationException($"Raw definition [{def.Id}] is already present in the index. Resource: [{def.ResourcePath}].");
+        if (!_definitions.TryAdd(definition.Id, definition))
+            throw new InvalidOperationException($"Raw definition [{definition.Id}] is already present in the index. Resource: [{definition.ResourcePath}].");
     }
 
-    public bool TryGet(DefId id, out DefRaw? definition)
+    public bool TryGet(DefId id, out DefRaw definition)
     {
-        return _definitions.TryGetValue(id, out definition);
+        return _definitions.TryGetValue(id, out definition!);
     }
 
     public DefRaw Get(DefId id)
     {
         if (!_definitions.TryGetValue(id, out var definition))
-            throw new KeyNotFoundException($"Raw definition [{id}] was not found.");
+            throw new KeyNotFoundException($"Raw definition [{id}] was not found");
 
         return definition;
     }
@@ -39,20 +39,20 @@ internal sealed class DefRawIndex
         return _definitions.Values.Where(definition => string.Equals(definition.PackageId, packageId, StringComparison.OrdinalIgnoreCase));
     }
 
-    public void RemovePackage(string packageId)
+    public void UnloadPackage(string packageId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(packageId);
 
-        var ids =
-            _definitions
-                .Where(pair => string.Equals(pair.Value.PackageId, packageId, StringComparison.OrdinalIgnoreCase))
-                .Select(static pair => pair.Key)
-                .ToArray();
+        var ids = _definitions
+                  .Where(pair => string.Equals(
+                      pair.Value.PackageId,
+                      packageId,
+                      StringComparison.OrdinalIgnoreCase))
+                  .Select(static pair => pair.Key)
+                  .ToArray();
 
         foreach (var id in ids)
-        {
             _definitions.Remove(id);
-        }
     }
 
     public void Clear()

@@ -8,163 +8,113 @@ namespace Grekov.Definitions.Materializations;
 
 internal sealed class DefFieldApplier
 {
-    private static readonly ConcurrentDictionary<
-        Type,
-        IReadOnlyDictionary<string, PropertyInfo>> PropertyCache = [];
+    private static readonly ConcurrentDictionary<Type, IReadOnlyDictionary<string, DefFieldMetadata>> PropertyCache = [];
 
     private readonly DefValueConverter _converter;
 
-    public DefFieldApplier(
-        DefValueConverter converter)
+    public DefFieldApplier(DefValueConverter converter)
     {
-        ArgumentNullException.ThrowIfNull(converter);
-
         _converter = converter;
     }
 
-    public void Apply(
-        Def definition,
-        IReadOnlyDictionary<string, DefValue> fields)
+    public void Apply(Def definition, IReadOnlyDictionary<string, DefValue> fields)
     {
         ArgumentNullException.ThrowIfNull(definition);
         ArgumentNullException.ThrowIfNull(fields);
 
-        var properties =
-            GetProperties(
-                definition.GetType());
+        var properties = GetProperties(definition.GetType());
 
         foreach (var (name, value) in fields)
         {
-            if (!properties.TryGetValue(
-                    name,
-                    out var property))
-            {
-                throw new InvalidOperationException(
-                    $"Unknown field '{name}' in definition " +
-                    $"'{definition.Id}' of type " +
-                    $"'{definition.GetType().Name}'.");
-            }
+            if (!properties.TryGetValue(name, out var metadata))
+                throw new InvalidOperationException($"Unknown field [{name}] in definition [{definition.Id}] of type [{definition.GetType().Name}]");
 
-            ApplyValue(
-                definition,
-                property,
-                name,
-                value);
+            ApplyValue(definition, metadata, name, value);
         }
+
+        ValidateRequiredFields(definition, properties, fields);
     }
 
-    private void ApplyValue(
-        Def definition,
-        PropertyInfo property,
-        string fieldName,
-        DefValue value)
+    private void ApplyValue(Def definition, DefFieldMetadata metadata, string fieldName, DefValue value)
     {
         object? converted;
 
         try
         {
-            converted =
-                _converter.Convert(
-                    value,
-                    property.PropertyType);
+            converted = _converter.Convert(value, metadata.Property.PropertyType);
         }
-        catch (Exception exception)
-            when (exception is
-                InvalidOperationException or
-                FormatException or
-                ArgumentException)
+        catch (Exception exception)when (exception is InvalidOperationException or FormatException or ArgumentException)
         {
-            throw new InvalidOperationException(
-                $"Failed to convert field '{fieldName}' " +
-                $"of definition '{definition.Id}' " +
-                $"to type '{property.PropertyType.Name}'.",
-                exception);
+            throw new InvalidOperationException($"Failed to convert field [{fieldName}] of definition [{definition.Id}] to type [{metadata.Property.PropertyType.Name}]", exception);
         }
 
         try
         {
-            property.SetValue(
-                definition,
-                converted);
+            metadata.Property.SetValue(definition, converted);
         }
-        catch (Exception exception)
-            when (exception is
-                TargetException or
-                ArgumentException or
-                TargetInvocationException)
+        catch (Exception exception)when (exception is TargetException or ArgumentException or TargetInvocationException)
         {
-            throw new InvalidOperationException(
-                $"Failed to assign field '{fieldName}' " +
-                $"of definition '{definition.Id}'.",
-                exception);
+            throw new InvalidOperationException($"Failed to assign field [{fieldName}] of definition [{definition.Id}]", exception);
         }
     }
 
-    private static IReadOnlyDictionary<string, PropertyInfo> GetProperties(
-        Type type)
+    private static void ValidateRequiredFields(
+        Def definition,
+        IReadOnlyDictionary<string, DefFieldMetadata> properties,
+        IReadOnlyDictionary<string, DefValue> fields)
     {
-        return PropertyCache.GetOrAdd(
-            type,
-            static definitionType =>
-                ScanProperties(definitionType));
+        foreach (var (name, metadata) in properties)
+        {
+            if (!metadata.Required)
+                continue;
+
+            if (fields.ContainsKey(name))
+                continue;
+
+            throw new InvalidOperationException($"Required field [{name}] is missing in definition [{definition.Id}] of type [{definition.GetType().Name}].");
+        }
     }
 
-    private static IReadOnlyDictionary<string, PropertyInfo> ScanProperties(
-        Type type)
-    {
-        var result =
-            new Dictionary<string, PropertyInfo>(
-                StringComparer.OrdinalIgnoreCase);
+    private static IReadOnlyDictionary<string, DefFieldMetadata> GetProperties(Type type) 
+        => PropertyCache.GetOrAdd(type, static definitionType => ScanProperties(definitionType));
 
-        var properties =
-            type.GetProperties(
-                BindingFlags.Instance |
-                BindingFlags.Public);
+    private static IReadOnlyDictionary<string, DefFieldMetadata> ScanProperties(Type type)
+    {
+        var result = new Dictionary<string, DefFieldMetadata>(StringComparer.OrdinalIgnoreCase);
+        var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
         foreach (var property in properties)
         {
             if (property.GetIndexParameters().Length != 0)
                 continue;
 
-            if (property.GetMethod is null ||
-                property.SetMethod is null)
+            if (property.SetMethod is not { IsPublic: true })
                 continue;
 
-            if (property.GetMethod.IsStatic ||
-                property.SetMethod.IsStatic)
+            if (property.SetMethod.IsStatic)
                 continue;
 
-            var attribute =
-                property.GetCustomAttribute<DefFieldAttribute>(
-                    inherit: true);
+            var attribute = property.GetCustomAttribute<DefFieldAttribute>(
+                inherit: true);
 
             if (attribute is null)
                 continue;
 
-            var fieldName =
-                attribute.Name ?? property.Name;
+            var fieldName = attribute.Name;
 
             if (string.IsNullOrWhiteSpace(fieldName))
-            {
-                throw new InvalidOperationException(
-                    $"Definition property '{type.Name}.{property.Name}' " +
-                    "has an empty field name.");
-            }
+                fieldName = property.Name;
 
-            if (!result.TryAdd(
-                    fieldName,
-                    property))
-            {
-                var existing =
-                    result[fieldName];
+            if (result.TryAdd(fieldName, new DefFieldMetadata(property, attribute.Required))) 
+                continue;
+            
+            var existing = result[fieldName];
 
-                throw new InvalidOperationException(
-                    $"Duplicate definition field '{fieldName}' " +
-                    $"in type '{type.Name}': " +
-                    $"'{existing.Name}' and '{property.Name}'.");
-            }
+            throw new InvalidOperationException($"Duplicate definition field [{fieldName}] in type [{type.Name}]: [{existing.Property.Name}] and [{property.Name}].");
         }
 
         return result;
     }
+
+    private sealed record DefFieldMetadata(PropertyInfo Property, bool Required);
 }

@@ -1,28 +1,30 @@
-using Grekov.Packaging.Interfaces;
-using Grekov.Packaging.Services;
+namespace Grekov.Definitions.Registry;
 
-namespace Grekov.Packaging.Services.Conflicts;
-
-public sealed class PackageConflictRegistry : IPackageConflictSink
+public sealed class DefConflictRegistry
 {
     private readonly Dictionary<string, string> _ownersByKey = new(StringComparer.OrdinalIgnoreCase);
 
-    public void Register(string key, string packageId)
+    public bool Register(string key, string packageId, out string? ownerPackageId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         ArgumentException.ThrowIfNullOrWhiteSpace(packageId);
 
-        if (!_ownersByKey.TryGetValue(key, out var ownerPackageId))
+        if (!_ownersByKey.TryGetValue(key, out var owner))
         {
             _ownersByKey[key] = packageId;
+            ownerPackageId = null;
 
-            return;
+            return true;
         }
 
-        if (string.Equals(ownerPackageId, packageId, StringComparison.OrdinalIgnoreCase))
-            return;
+        if (string.Equals(owner, packageId, StringComparison.OrdinalIgnoreCase))
+        {
+            ownerPackageId = owner;
+            return true;
+        }
 
-        throw new InvalidOperationException(PackageIssues.ConflictIssue(key, packageId, ownerPackageId).Message);
+        ownerPackageId = owner;
+        return false;
     }
 
     public bool IsRegistered(string key)
@@ -39,13 +41,12 @@ public sealed class PackageConflictRegistry : IPackageConflictSink
         return _ownersByKey.TryGetValue(key, out packageId);
     }
 
-    public void UnregisterPackage(string packageId)
+    public void UnloadPackage(string packageId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(packageId);
 
         var keys = _ownersByKey
-                   .Where(pair =>
-                       string.Equals(pair.Value, packageId, StringComparison.OrdinalIgnoreCase))
+                   .Where(pair => string.Equals(pair.Value, packageId, StringComparison.OrdinalIgnoreCase))
                    .Select(static pair => pair.Key)
                    .ToArray();
 

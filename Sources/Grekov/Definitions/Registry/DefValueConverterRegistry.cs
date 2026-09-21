@@ -22,12 +22,17 @@ internal sealed class DefValueConverterRegistry
 
 	public void Refresh(IEnumerable<Assembly> assemblies)
 	{
-		_packageConverters.Clear();
-
+		Clear();
+		
 		foreach (var assembly in assemblies.Distinct())
 		{
 			ScanAssembly(assembly, _packageConverters);
 		}
+	}
+	
+	public void Clear()
+	{
+		_packageConverters.Clear();
 	}
 
 	private void ScanAssembly(Assembly assembly, List<IDefValueConverter> target)
@@ -45,4 +50,6 @@ internal sealed class DefValueConverterRegistry
 			target.Add(converter);
 		}
 	}
+
+
 }
