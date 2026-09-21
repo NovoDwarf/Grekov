@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>$(ProjectTargetFrameworks)</TargetFrameworks>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Grekov.Binary\Grekov.Binary.csproj" />
+      <ProjectReference Include="..\Grekov\Grekov.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="NovoDwarf.FS" Version="1.0.1" />
+    </ItemGroup>
+
+</Project>
