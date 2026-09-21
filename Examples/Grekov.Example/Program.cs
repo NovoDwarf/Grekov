@@ -11,11 +11,6 @@ internal static class Program
 {
     public static async Task Main()
     {
-        Console.WriteLine("======================================");
-        Console.WriteLine("Grekov DI Demo");
-        Console.WriteLine("======================================");
-        Console.WriteLine();
-
         var services = new ServiceCollection();
 
         ConfigureServices(services);
@@ -53,15 +48,9 @@ internal static class Program
         await grekov.Stop();
 
         Console.WriteLine("[OK] Grekov stopped.");
-        Console.WriteLine();
-        Console.WriteLine("======================================");
-        Console.WriteLine("SUCCESS");
-        Console.WriteLine("Grekov DI demo completed successfully.");
-        Console.WriteLine("======================================");
     }
 
-    private static void ConfigureServices(
-        IServiceCollection services)
+    private static void ConfigureServices(IServiceCollection services)
     {
         services.AddGrekov(grekov =>
         {
@@ -107,19 +96,6 @@ internal static class Program
 
     private static void PrintDefinitions(IDefCatalog catalog)
     {
-        // Здесь подставь фактический API твоего IDefCatalog.
-        //
-        // Например, если у тебя есть:
-        //
-        // foreach (var definition in catalog.All)
-        // {
-        //     Console.WriteLine(
-        //         $"  {definition.Id}");
-        // }
-        //
-        // Пока сам факт разрешения IDefCatalog из DI
-        // уже проверяется через GetRequiredService.
-        
         Console.WriteLine($"Catalog: {catalog.GetType().Name}");
         Console.WriteLine("[OK] IDefCatalog resolved from DI.");
     }
