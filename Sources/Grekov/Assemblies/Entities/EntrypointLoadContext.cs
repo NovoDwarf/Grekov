@@ -7,8 +7,8 @@ internal sealed class EntrypointLoadContext : AssemblyLoadContext
 {
 	private readonly AssemblyDependencyResolver _resolver;
 
-	public EntrypointLoadContext(string mainAssemblyPath, string packageId)
-		: base(name: $"Package:{packageId}:{Path.GetFileNameWithoutExtension(mainAssemblyPath)}", isCollectible: true)
+	public EntrypointLoadContext(string mainAssemblyPath, string packageId, string fileName)
+		: base(name: $"Package:{packageId}:{fileName}", isCollectible: true)
 	{
 		_resolver = new AssemblyDependencyResolver(mainAssemblyPath);
 	}

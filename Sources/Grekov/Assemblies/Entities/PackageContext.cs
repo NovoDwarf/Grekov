@@ -1,26 +1,38 @@
 using System.Reflection;
 using Grekov.Core.Interfaces;
+using Grekov.Packaging.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grekov.Assemblies.Entities;
 
 public sealed class PackageContext : IPackageContext
 {
-	public PackageContext(string packageId, string root, IServiceProvider services, IReadOnlyList<Assembly> assemblies)
+	private readonly IServiceProvider _services;
+	private readonly IReadOnlyList<Assembly> _assemblies;
+
+	public PackageContext(
+		string packageId,
+		IPackageContent content,
+		IServiceProvider services, 
+		IReadOnlyList<Assembly> assemblies)
 	{
+
+
 		PackageId = packageId;
-		Root = root;
-		Services = services;
-		Assemblies = assemblies;
+		Content = content;
+		_services = services;
+		_assemblies = assemblies;
 	}
 
 	public string PackageId { get; }
 
-	public string Root { get; }
+	public IPackageContent Content { get; }
 
-	public IServiceProvider Services { get; }
+	public IReadOnlyList<Assembly> Assemblies => _assemblies;
 
-	public IReadOnlyList<Assembly> Assemblies { get; }
+	public T GetService<T>() where T : notnull
+	{
+		return _services.GetRequiredService<T>();
+	}
 }
-
 
