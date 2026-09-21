@@ -2,8 +2,8 @@
 
     <PropertyGroup>
         <ProjectTargetFrameworks>net10.0;net11.0</ProjectTargetFrameworks>
-        <ProjectVersion>1.0.1-dev1</ProjectVersion>
-        <ProjectAssemblyVersion>1.0.0.0</ProjectAssemblyVersion>
+        <ProjectVersion>1.1.0-dev1</ProjectVersion>
+        <ProjectAssemblyVersion>1.1.0.1</ProjectAssemblyVersion>
         <ProjectAuthors>NovoDwarf</ProjectAuthors>
         <ProjectCopyright>NovoDwarf</ProjectCopyright>
         <ProjectRepositoryUrl>https://github.com/NovoDwarf/Grekov</ProjectRepositoryUrl>

@@ -1,10 +1,22 @@
 <Solution>
-  <Folder Name="/Examples/" />
-  <Folder Name="/Sources/">
+  <Folder Name="/Examples/">
+    <Project Path="Examples/Grekov.Binary.Example/Grekov.Binary.Example.csproj" />
+    <Project Path="Examples/Grekov.Example/Grekov.Example.csproj" />
+  </Folder>
+  <Folder Name="/Sources/" />
+  <Folder Name="/Sources/Core/">
+    <Project Path="Sources/Grekov.Binary/Grekov.Binary.csproj" />
+    <Project Path="Sources/Grekov/Grekov.csproj" />
+  </Folder>
+  <Folder Name="/Sources/Providers/">
+    <Project Path="Sources/Grekov.Providers.Binary/Grekov.Providers.Binary.csproj" />
+    <Project Path="Sources/Grekov.Providers.FileSystem/Grekov.Providers.FileSystem.csproj" />
+  </Folder>
+  <Folder Name="/Sources/Readers/">
     <Project Path="Sources/Grekov.Readers.Json/Grekov.Readers.Json.csproj" />
     <Project Path="Sources/Grekov.Readers.Toml/Grekov.Readers.Toml.csproj" />
     <Project Path="Sources/Grekov.Readers.Xml/Grekov.Readers.Xml.csproj" />
-    <Project Path="Sources/Grekov/Grekov.csproj" />
+    <Project Path="Sources/Grekov.Readers.Yaml/Grekov.Readers.Yaml.csproj" />
   </Folder>
   <Folder Name="/Tests/" />
 </Solution>

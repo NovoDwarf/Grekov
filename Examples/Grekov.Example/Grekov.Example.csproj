@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>$(ProjectTargetFrameworks)</TargetFrameworks>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Sources\Grekov.Providers.Binary\Grekov.Providers.Binary.csproj" />
+      <ProjectReference Include="..\..\Sources\Grekov.Providers.FileSystem\Grekov.Providers.FileSystem.csproj" />
+      <ProjectReference Include="..\..\Sources\Grekov.Readers.Xml\Grekov.Readers.Xml.csproj" />
+      <ProjectReference Include="..\..\Sources\Grekov\Grekov.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.1.26425.128" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Content\Packages\Demo\Definitions\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Content\Packages\Demo\Manifest.xml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Content\Packages\Demo\Definitions\Sword.xml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
+</Project>
