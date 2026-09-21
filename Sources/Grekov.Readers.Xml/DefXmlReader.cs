@@ -1,188 +1,286 @@
 using System.Xml;
 using System.Xml.Linq;
+using System.Xml.Serialization;
 using Grekov.Core;
 using Grekov.Definitions.Interfaces;
 using Grekov.Definitions.Models;
 using Grekov.Definitions.Registry;
+using Grekov.Packaging.Entities;
+using NovoDwarf.FS.Files.Interfaces;
+using NovoDwarf.FS.Paths.Interfaces;
 
 namespace Grekov.Readers.Xml;
 
 internal sealed class DefXmlReader : IDefFormatReader
 {
-    private static readonly IReadOnlySet<string> SupportedExtensions = new HashSet<string>([".xml"], StringComparer.OrdinalIgnoreCase);
-    private static readonly HashSet<string> ReservedAttributes = [with(StringComparer.OrdinalIgnoreCase), "Id", "Parent", "Type"];
+	private static readonly IReadOnlySet<string> SupportedExtensions = new HashSet<string>([".xml"], StringComparer.OrdinalIgnoreCase);
+	private static readonly IReadOnlySet<string> ReservedAttributes = new HashSet<string>(["Id", "Parent"], StringComparer.OrdinalIgnoreCase);
+	
+	private static readonly XmlSerializer ManifestSerializer = new(typeof(PackageManifest));
 
-    private readonly DefTypeRegistry _typeRegistry;
+	private readonly IFileStreamer _fileStreamer;
+	private readonly IPathParser _pathParser;
 
-    public DefXmlReader(DefTypeRegistry typeRegistry)
-    {
-        ArgumentNullException.ThrowIfNull(typeRegistry);
+	private readonly DefIssueRegistry _issueRegistry;
+	private readonly DefTypeRegistry _typeRegistry;
 
-        _typeRegistry = typeRegistry;
-    }
+	public DefXmlReader(
+		DefTypeRegistry typeRegistry,
+		IPathParser pathParser,
+		IFileStreamer fileStreamer, DefIssueRegistry issueRegistry)
+	{
+		_typeRegistry = typeRegistry;
+		_pathParser = pathParser;
+		_fileStreamer = fileStreamer;
+		_issueRegistry = issueRegistry;
+	}
 
-    public IReadOnlySet<string> Extensions => SupportedExtensions;
-    
-    public IReadOnlyList<DefRaw> ReadDefs(DefReadContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
+	public IReadOnlySet<string> Extensions => SupportedExtensions;
 
-        var document = XDocument.Load(context.ResourcePath, LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace);
+	public PackageManifest ReadManifest(string manifestPath)
+	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
 
-        if (document.Root is null)
-            throw new InvalidDataException($"XML definition file is empty: [{context.ResourcePath}].");
+		using var stream = _fileStreamer.OpenRead(manifestPath);
 
-        return [ReadDefinition(document.Root, context)];
-    }
+		return ReadManifest(stream, manifestPath);
+	}
 
-    private DefRaw ReadDefinition(XElement element, DefReadContext context)
-    {
-        var elementName = element.Name.LocalName;
+	public PackageManifest ReadManifest(Stream stream)
+	{
+		ArgumentNullException.ThrowIfNull(stream);
 
-        if (!_typeRegistry.TryResolveByElementName(elementName, out var typeName))
-            throw Error(element, context, $"Unknown definition type [{elementName}].");
+		return ReadManifest(stream, "<stream>");
+	}
 
-        var id = ReadRequiredId(element, context);
-        var parentId = ReadOptionalParentId(element, context);
+	public IReadOnlyList<DefRaw> ReadDefinitions(DefReadContext context)
+	{
+		ArgumentNullException.ThrowIfNull(context);
 
-        var fields = ReadFields(element, context);
+		using var stream = _fileStreamer.OpenRead(context.ResourcePath);
 
-        return new DefRaw
-        {
-            Id = id,
-            TypeName = typeName,
-            ParentId = parentId,
-            Fields = fields,
-            PackageId = context.PackageId,
-            ResourcePath = context.ResourcePath
-        };
-    }
+		return ReadDefinitions(stream, context);
+	}
 
-    private static DefId ReadRequiredId(XElement element, DefReadContext context)
-    {
-        var value = GetAttributeValue(element, "Id");
+	public IReadOnlyList<DefRaw> ReadDefinitions(Stream stream, DefReadContext context)
+	{
+		ArgumentNullException.ThrowIfNull(stream);
+		ArgumentNullException.ThrowIfNull(context);
 
-        if (string.IsNullOrWhiteSpace(value))
-            throw Error(element, context, "Definition does not contain required [Id] attribute.");
+		var document = XDocument.Load(stream, LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace);
 
-        try
-        {
-            return DefId.Parse(value);
-        }
-        catch (Exception exception)when (exception is ArgumentException or FormatException)
-        {
-            throw Error(element, context, $"Invalid definition Id [{value}].", exception);
-        }
-    }
+		if (document.Root is null)
+		{
+			_issueRegistry.Add(DefIssues.XmlEmpty(context.PackageId, context.ResourcePath));
+			return [];
+		}
 
-    private static DefId? ReadOptionalParentId(XElement element, DefReadContext context)
-    {
-        var value = GetAttributeValue(element, "Parent");
+		var definition = ReadDefinition(document.Root, context);
 
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
+		return definition is null
+			? [] 
+			: [definition];
+	}
 
-        try
-        {
-            return DefId.Parse(value);
-        }
-        catch (Exception exception)when (exception is ArgumentException or FormatException)
-        {
-            throw Error(element, context, $"Invalid parent Id [{value}].", exception);
-        }
-    }
+	private PackageManifest ReadManifest(Stream stream, string source)
+	{
+		try
+		{
+			var manifest = ManifestSerializer.Deserialize(stream) as PackageManifest ?? throw new InvalidDataException("XML manifest does not contain a valid package manifest.");
 
-    private static Dictionary<string, DefValue> ReadFields(XElement element, DefReadContext context)
-    {
-        var fields = new Dictionary<string, DefValue>(StringComparer.OrdinalIgnoreCase);
+			if (string.IsNullOrWhiteSpace(manifest.Id) && !string.Equals(source, "<stream>", StringComparison.Ordinal)) 
+				manifest.Id = _pathParser.GetDirectoryName(source);
 
-        ReadAttributes(element, fields, context);
-        ReadChildElements(element, fields, context);
+			return manifest;
+		}
+		catch (InvalidOperationException exception)
+		{
+			throw new InvalidDataException($"Invalid XML package manifest: [{source}].", exception);
+		}
+	}
 
-        return fields;
-    }
+	private DefRaw? ReadDefinition(XElement element, DefReadContext context)
+	{
+		var elementName = element.Name.LocalName;
 
-    private static void ReadAttributes(XElement element, Dictionary<string, DefValue> fields, DefReadContext context)
-    {
-        foreach (var attribute in element.Attributes())
-        {
-            var name = attribute.Name.LocalName;
+		if (!_typeRegistry.TryResolveByElementName(elementName, out var typeName))
+		{
+			_issueRegistry.Add( DefIssues.UnknownType(context.PackageId, context.ResourcePath, elementName, GetLine(element), GetColumn(element)));
+			return null;
+		}
 
-            if (ReservedAttributes.Contains(name))
-                continue;
+		var fields = ReadFields(element, context);
+		var id = ReadRequiredId(element, context);
+		
+		if (id is null)
+			return null;
+		
+		var parentId = ReadOptionalParentId(element, context);
 
-            AddField(fields, name, DefValue.ScalarValue(attribute.Value), element, context);
-        }
-    }
+		fields.Remove("Id");
+		fields.Remove("Parent");
 
-    private static void ReadChildElements(XElement element, Dictionary<string, DefValue> fields, DefReadContext context)
-    {
-        foreach (var group in element.Elements().GroupBy(child => child.Name.LocalName, StringComparer.OrdinalIgnoreCase))
-        {
-            var children = group.ToArray();
-            var fieldName = group.Key;
+		return new DefRaw
+		{
+			Id = id.Value,
+			Type = typeName,
+			ParentId = parentId,
+			Fields = fields,
+			PackageId = context.PackageId,
+			ResourcePath = context.ResourcePath
+		};
+	}
 
-            DefValue value;
+	private DefId? ReadRequiredId(XElement element, DefReadContext context)
+	{
+		var value = GetStructuralValue(element, "Id", context);
 
-            if (children.Length == 1)
-            {
-                value = ReadElementValue(children[0], context);
-            }
-            else
-            {
-                value = DefValue.ListValue([.. children.Select(child => ReadElementValue(child, context))]);
-            }
+		if (string.IsNullOrWhiteSpace(value))
+		{
+			_issueRegistry.Add(DefIssues.MissingId(context.PackageId, context.ResourcePath, GetLine(element), GetColumn(element)));
+			return null;
+		}
 
-            AddField(fields, fieldName, value, element, context);
-        }
-    }
+		try
+		{
+			return DefId.Parse(value);
+		}
+		catch (Exception exception)when (exception is ArgumentException or FormatException)
+		{
+			_issueRegistry.Add(DefIssues.InvalidId(context.PackageId, context.ResourcePath, value, GetLine(element), GetColumn(element), exception));
+			return null;
+		}
+	}
 
-    private static DefValue ReadElementValue(XElement element, DefReadContext context)
-    {
-        var childElements = element.Elements().ToArray();
-        var attributes = element.Attributes().ToArray();
-        var text = element.Value.Trim();
+	private DefId? ReadOptionalParentId(XElement element, DefReadContext context)
+	{
+		var value = GetStructuralValue(element, "Parent", context);
 
-        if (childElements.Length == 0 && attributes.Length == 0)
-            return DefValue.ScalarValue(text);
+		if (string.IsNullOrWhiteSpace(value))
+			return null;
 
-        var fields = new Dictionary<string, DefValue>(StringComparer.OrdinalIgnoreCase);
+		try
+		{
+			return DefId.Parse(value);
+		}
+		catch (Exception exception)when (exception is ArgumentException or FormatException)
+		{
+			_issueRegistry.Add(DefIssues.InvalidParentId(context.PackageId, context.ResourcePath, value, GetLine(element), GetColumn(element), exception));
+			return null;
+		}
+	}
 
-        foreach (var attribute in attributes) 
-            fields[attribute.Name.LocalName] = DefValue.ScalarValue(attribute.Value);
+	private Dictionary<string, DefValue> ReadFields(XElement element, DefReadContext context)
+	{
+		var fields = new Dictionary<string, DefValue>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var group in childElements.GroupBy(child => child.Name.LocalName, StringComparer.OrdinalIgnoreCase))
-        {
-            var children = group.ToArray();
+		ReadAttributes(element, fields, context);
+		ReadChildElements(element, fields, context);
 
-            if (children.Length == 1)
-                fields[group.Key] = ReadElementValue(children[0], context);
-            else
-                fields[group.Key] = DefValue.ListValue([.. children.Select(child => ReadElementValue(child, context))]);
-        }
+		return fields;
+	}
 
-        return DefValue.ObjectValue(fields);
-    }
+	private void ReadAttributes(XElement element, Dictionary<string, DefValue> fields, DefReadContext context)
+	{
+		foreach (var attribute in element.Attributes())
+		{
+			var name = attribute.Name.LocalName;
 
-    private static void AddField(Dictionary<string, DefValue> fields, string name, DefValue value, XElement element, DefReadContext context)
-    {
-        if (!fields.TryAdd(name, value))
-            throw Error(element, context, $"Field [{name}] is declared more than once.");
-    }
+			if (ReservedAttributes.Contains(name))
+				continue;
 
-    private static string? GetAttributeValue(XElement element, string name)
-    {
-        return element.Attributes()
-            .FirstOrDefault(attribute => attribute.Name.LocalName.Equals(name, StringComparison.OrdinalIgnoreCase))
-            ?.Value;
-    }
+			AddField(fields, name, DefValue.ScalarValue(attribute.Value), element, context);
+		}
+	}
 
-    private static InvalidDataException Error(XElement element, DefReadContext context, string message, Exception? innerException = null)
-    {
-        IXmlLineInfo lineInfo = element;
+	private void ReadChildElements(XElement element, Dictionary<string, DefValue> fields, DefReadContext context)
+	{
+		foreach (var group in element.Elements().GroupBy(child => child.Name.LocalName, StringComparer.OrdinalIgnoreCase))
+		{
+			var children = group.ToArray();
+			var value = children.Length == 1
+					? ReadElementValue(children[0], context)
+					: DefValue.ListValue([.. children.Select(child => ReadElementValue(child, context))]);
 
-        var location = lineInfo.HasLineInfo() ? $"Line {lineInfo.LineNumber}, position {lineInfo.LinePosition}. " : string.Empty;
+			AddField(fields, group.Key, value, element, context);
+		}
+	}
 
-        return new InvalidDataException($"{message} {location}. File: [{context.ResourcePath}']", innerException);
-    }
+	private DefValue ReadElementValue(XElement element, DefReadContext context)
+	{
+		var childElements = element.Elements().ToArray();
+		var attributes = element.Attributes().ToArray();
+
+		if (childElements.Length == 0 && attributes.Length == 0) 
+			return DefValue.ScalarValue(element.Value.Trim());
+
+		var fields = new Dictionary<string, DefValue>(StringComparer.OrdinalIgnoreCase);
+
+		foreach (var attribute in attributes)
+			AddField(fields, attribute.Name.LocalName, DefValue.ScalarValue(attribute.Value), element, context);
+
+		foreach (var group in childElements.GroupBy(child => child.Name.LocalName, StringComparer.OrdinalIgnoreCase))
+		{
+			var children = group.ToArray();
+			var value = children.Length == 1 ? ReadElementValue(children[0], context)
+					: DefValue.ListValue([.. children.Select(child => ReadElementValue(child, context))]);
+
+			AddField(fields, group.Key, value, element, context);
+		}
+
+		return DefValue.ObjectValue(fields);
+	}
+
+	private void AddField(
+		Dictionary<string, DefValue> fields,
+		string name,
+		DefValue value,
+		XElement element,
+		DefReadContext context)
+	{
+		if (fields.TryAdd(name, value))
+			return;
+
+		_issueRegistry.Add( DefIssues.DuplicateField(context.PackageId, context.ResourcePath, name, GetLine(element), GetColumn(element)));
+	}
+
+	private string? GetStructuralValue(XElement element, string name, DefReadContext context)
+	{
+		var attribute = element.Attributes().FirstOrDefault(attribute => attribute.Name.LocalName.Equals(name, StringComparison.OrdinalIgnoreCase));
+		var children = element.Elements()
+		                      .Where(child => child.Name.LocalName.Equals(name, StringComparison.OrdinalIgnoreCase))
+		                      .ToArray();
+
+		if (attribute is not null && children.Length > 0)
+		{
+			_issueRegistry.Add(DefIssues.StructuralValueConflict(context.PackageId, context.ResourcePath, name, GetLine(element), GetColumn(element)));
+			return null;
+		}
+
+		if (children.Length > 1)
+		{
+			_issueRegistry.Add(DefIssues.MultipleStructuralValues(context.PackageId, context.ResourcePath, name, GetLine(element), GetColumn(element)));
+			return null;
+		}
+
+		return attribute?.Value ?? children.FirstOrDefault()?.Value;
+	}
+
+	private static int? GetLine(XElement element)
+	{
+		IXmlLineInfo lineInfo = element;
+
+		return lineInfo.HasLineInfo()
+			? lineInfo.LineNumber
+			: null;
+	}
+
+	private static int? GetColumn(XElement element)
+	{
+		IXmlLineInfo lineInfo = element;
+
+		return lineInfo.HasLineInfo()
+			? lineInfo.LinePosition
+			: null;
+	}
 }

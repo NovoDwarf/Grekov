@@ -4,4 +4,9 @@
         <TargetFrameworks>$(ProjectTargetFrameworks)</TargetFrameworks>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Grekov" Version="1.0.1-dev2" />
+      <PackageReference Include="Tomlyn" Version="2.10.1" />
+    </ItemGroup>
+
 </Project>

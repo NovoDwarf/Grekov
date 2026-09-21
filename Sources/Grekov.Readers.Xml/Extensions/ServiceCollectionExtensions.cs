@@ -1,12 +1,12 @@
-using Grekov.Definitions.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
+using Grekov.Builders;
+using Grekov.Extensions;
 
 namespace Grekov.Readers.Xml.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class GrekovExtensions
 {
-	public static IServiceCollection Xml(this IServiceCollection services)
+	public static GrekovReaderBuilder Xml(this GrekovReaderBuilder builder)
 	{
-		return services.AddSingleton<IDefFormatReader, DefXmlReader>();
+		return builder.Add<DefXmlReader>();
 	}
 }

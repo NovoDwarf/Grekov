@@ -5,7 +5,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Grekov" Version="1.0.1-dev1" />
+      <PackageReference Include="Grekov" Version="1.1.0-dev1" />
+      <PackageReference Include="NovoDwarf.FS" Version="1.0.1" />
     </ItemGroup>
     
 </Project>

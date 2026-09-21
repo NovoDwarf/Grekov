@@ -3,5 +3,9 @@
     <PropertyGroup>
         <TargetFrameworks>$(ProjectTargetFrameworks)</TargetFrameworks>
     </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Grekov" Version="1.0.1-dev2" />
+    </ItemGroup>
     
 </Project>
