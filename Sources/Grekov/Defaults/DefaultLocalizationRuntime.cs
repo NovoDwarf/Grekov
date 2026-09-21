@@ -3,18 +3,32 @@ using Grekov.Localizations.Interfaces;
 
 namespace Grekov.Defaults;
 
-public sealed class DefaultLocalizationRuntime : ILocalizationRuntime
+internal sealed class DefaultLocalizationRuntime : ILocalizationRuntime
 {
-	private readonly Dictionary<string, Translation> _translations = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Dictionary<string, Dictionary<string, Translation>> _packages =
+		new(StringComparer.OrdinalIgnoreCase);
 
-	public IEnumerable<Translation> Translations => _translations.Values;
+	public IEnumerable<Translation> Translations =>
+		_packages.Values
+		         .SelectMany(static translations => translations.Values);
 
-	public void Apply(string locale, string key, string value)
+	public void Apply(string packageId, string locale, string key, string value)
 	{
-		if (!_translations.TryGetValue(locale, out var translation))
+		ArgumentException.ThrowIfNullOrWhiteSpace(packageId);
+		ArgumentException.ThrowIfNullOrWhiteSpace(locale);
+		ArgumentException.ThrowIfNullOrWhiteSpace(key);
+
+		if (!_packages.TryGetValue(packageId, out var translations))
+		{
+			translations = new Dictionary<string, Translation>(StringComparer.OrdinalIgnoreCase);
+
+			_packages.Add(packageId, translations);
+		}
+
+		if (!translations.TryGetValue(locale, out var translation))
 		{
 			translation = new Translation(locale);
-			_translations[locale] = translation;
+			translations.Add(locale, translation);
 		}
 
 		translation.Messages[key] = value;
@@ -22,5 +36,13 @@ public sealed class DefaultLocalizationRuntime : ILocalizationRuntime
 
 	public void RemovePackage(string packageId)
 	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(packageId);
+
+		_packages.Remove(packageId);
+	}
+
+	public void Clear()
+	{
+		_packages.Clear();
 	}
 }

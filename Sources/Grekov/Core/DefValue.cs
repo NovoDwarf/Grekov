@@ -22,9 +22,21 @@ public sealed class DefValue
 
 	public static DefValue Null() => new(DefValueKind.Null);
 
-	public static DefValue ScalarValue(object? value) => new(DefValueKind.Scalar, scalar: value);
+	public static DefValue ScalarValue(object value)
+	{
+		ArgumentNullException.ThrowIfNull(value);
+		return new DefValue(DefValueKind.Scalar, scalar: value);
+	}
 
-	public static DefValue ObjectValue(IReadOnlyDictionary<string, DefValue> value) => new(DefValueKind.Object, @object: value);
+	public static DefValue ObjectValue(IReadOnlyDictionary<string, DefValue> value)
+	{
+		ArgumentNullException.ThrowIfNull(value);
+		return new DefValue(DefValueKind.Object, @object: value);
+	}
 
-	public static DefValue ListValue(IReadOnlyList<DefValue> value) => new(DefValueKind.List, list: value);
+	public static DefValue ListValue(IReadOnlyList<DefValue> value)
+	{
+		ArgumentNullException.ThrowIfNull(value);
+		return new DefValue(DefValueKind.List, list: value);
+	}
 }

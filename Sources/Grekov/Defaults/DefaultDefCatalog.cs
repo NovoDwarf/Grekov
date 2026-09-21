@@ -10,8 +10,6 @@ public sealed class DefaultDefCatalog : IDefCatalog
 
 	public DefaultDefCatalog(DefIndex index)
 	{
-		ArgumentNullException.ThrowIfNull(index);
-
 		_index = index;
 	}
 
@@ -24,15 +22,36 @@ public sealed class DefaultDefCatalog : IDefCatalog
 	{
 		return _index.Get<T>(DefId.Parse(id));
 	}
-
-	public T? GetByPath<T>(string? resourcePath) where T : Def
+	
+	public IEnumerable<T> GetByPackage<T>(string packageId) where T : Def
 	{
-		return _index.Get<T>(DefId.Parse(resourcePath)); // TODO: fix add GetByPath<T>
+		return _index.GetByPackage<T>(packageId);
+	}
+	
+	public IEnumerable<Def> GetByPackage(string packageId)
+	{
+		return _index.GetByPackage(packageId);
+	}
+
+	public T? GetByResourcePath<T>(string resourcePath)
+		where T : Def
+	{
+		return _index.GetByResourcePath<T>(resourcePath);
 	}
 
 	public IEnumerable<T> All<T>() where T : Def
 	{
 		return _index.All<T>();
+	}
+
+	public bool Contains<T>(DefId id) where T : Def
+	{
+		return _index.Contains<T>(id);
+	}
+
+	public bool Contains(Type type, DefId id)
+	{
+		return _index.Contains(type, id);
 	}
 
 	public T? FirstOrDefault<T>() where T : Def

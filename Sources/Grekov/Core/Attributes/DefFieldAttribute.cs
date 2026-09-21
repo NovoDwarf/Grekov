@@ -1,5 +1,3 @@
-using Grekov.Core.Enums;
-
 namespace Grekov.Core.Attributes;
 
 [AttributeUsage(AttributeTargets.Property)]

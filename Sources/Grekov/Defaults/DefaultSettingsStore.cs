@@ -2,7 +2,7 @@ using Grekov.Packaging.Interfaces;
 
 namespace Grekov.Defaults;
 
-public sealed class DefaultLoadOrderStore : IPackageLoadOrderStore
+public sealed class DefaultSettingsStore : IPackageSettingsStore
 {
 	public IReadOnlyDictionary<string, bool> LoadEnabledOverrides()
 	{

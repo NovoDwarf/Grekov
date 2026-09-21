@@ -4,7 +4,7 @@ namespace Grekov.Core;
 
 public abstract class Def
 {
-	public DefId Id { get; set; }
+	public DefId Id { get; internal set; }
 	
 	[DefField]
 	public string Name { get; set; } = string.Empty;
@@ -15,5 +15,4 @@ public abstract class Def
 	
 	public string PackageId { get; internal set; } = string.Empty;
 	public string ResourcePath { get; internal set; } = string.Empty;
-	public string ResourceName => Path.GetFileNameWithoutExtension(ResourcePath);
 }

@@ -1,15 +1,16 @@
 using System.Reflection;
+using Grekov.Packaging.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grekov.Core.Interfaces;
 
 public interface IPackageContext
 {
-	string PackageId { get; }
+	public string PackageId { get; }
 
-	string Root { get; }
+	public IPackageContent Content { get; }
 
-	IServiceProvider Services { get; }
+	public IReadOnlyList<Assembly> Assemblies { get; }
 
-	IReadOnlyList<Assembly> Assemblies { get; }
+	public T GetService<T>() where T : notnull;
 }
