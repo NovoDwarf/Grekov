@@ -15,11 +15,18 @@ internal sealed class TranslationRegistry
 	public void Apply(IEnumerable<LocalizedStringDef> defs)
 	{
 		foreach (var def in defs)
-			_runtime.Apply(def.Locale, def.Key, def.Value);
+		{
+			_runtime.Apply(def.PackageId, def.Locale, def.Key, def.Value);
+		}
 	}
 
 	public void RemovePackage(string packageId)
 	{
 		_runtime.RemovePackage(packageId);
+	}
+
+	public void Clear()
+	{
+		_runtime.Clear();
 	}
 }

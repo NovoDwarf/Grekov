@@ -2,6 +2,9 @@ namespace Grekov.Localizations.Interfaces;
 
 public interface ILocalizationRuntime
 {
-	public void Apply(string locale, string key, string value);
-	public void RemovePackage(string packageId);
+	void Apply(string packageId, string locale, string key, string value);
+
+	void RemovePackage(string packageId);
+
+	void Clear();
 }

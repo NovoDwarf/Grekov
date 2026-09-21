@@ -19,22 +19,18 @@ internal sealed class LocalizationService
 		_translations = translations;
 	}
 
-	public void Load(IReadOnlyList<PackageInstance> packages)
+	public async Task Load(IReadOnlyList<PackageInstance> packages)
 	{
 		foreach (var package in packages)
 		{
-			var defs = _defs
-			           .All<LocalizedStringDef>()
-			           .Where(def => string.Equals(def.PackageId, package.Id, StringComparison.OrdinalIgnoreCase))
-			           .ToArray();
+			var defs = _defs.GetByPackage<LocalizedStringDef>(package.Id).ToList();
 
 			_state.LoadedByPackageId[package.Id] = [.. defs];
-
 			_translations.Apply(defs);
 		}
 	}
 
-	public void Unload(IReadOnlyList<PackageInstance> packages)
+	public async Task Unload(IReadOnlyList<PackageInstance> packages)
 	{
 		foreach (var package in packages.Reverse())
 		{
