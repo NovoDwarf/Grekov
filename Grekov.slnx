@@ -10,7 +10,6 @@
   </Folder>
   <Folder Name="/Sources/Providers/">
     <Project Path="Sources/Grekov.Providers.Binary/Grekov.Providers.Binary.csproj" />
-    <Project Path="Sources/Grekov.Providers.Database/Grekov.Providers.Database.csproj" />
     <Project Path="Sources/Grekov.Providers.FileSystem/Grekov.Providers.FileSystem.csproj" />
   </Folder>
   <Folder Name="/Sources/Readers/">
@@ -18,6 +17,10 @@
     <Project Path="Sources/Grekov.Readers.Toml/Grekov.Readers.Toml.csproj" />
     <Project Path="Sources/Grekov.Readers.Xml/Grekov.Readers.Xml.csproj" />
     <Project Path="Sources/Grekov.Readers.Yaml/Grekov.Readers.Yaml.csproj" />
+  </Folder>
+  <Folder Name="/Sources/Storages/">
+    <Project Path="Sources/Grekov.Storage.InMemory/Grekov.Storage.InMemory.csproj" />
+    <Project Path="Sources/Grekov.Storages.Database/Grekov.Storages.Database.csproj" />
   </Folder>
   <Folder Name="/Tests/" />
 </Solution>
