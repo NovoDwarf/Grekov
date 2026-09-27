@@ -5,6 +5,7 @@ using Grekov.Packaging.Entities;
 using Grekov.Packaging.Interfaces;
 using Microsoft.Extensions.Options;
 using NovoDwarf.FS.Directories.Interfaces;
+using NovoDwarf.FS.Files.Interfaces;
 using NovoDwarf.FS.Paths.Interfaces;
 
 namespace Grekov.Providers.FileSystem;
@@ -15,6 +16,7 @@ internal sealed class FileSystemPackageProvider : IPackageProvider
     private readonly string _manifestName;
 
     private readonly IDirectoryReader _directoryReader;
+	private readonly IFileStreamer _fileStreamer;
     private readonly IPathParser _pathParser;
     private readonly IDefReaderRegistry _readerRegistry;
 
@@ -25,6 +27,7 @@ internal sealed class FileSystemPackageProvider : IPackageProvider
         IOptions<FileSystemOptions> fileOptions,
         IDefReaderRegistry readerRegistry,
         IDirectoryReader directoryReader,
+		IFileStreamer fileStreamer,
         IPathParser pathParser,
         FileSystemContentFactory contentFactory)
     {
@@ -35,6 +38,7 @@ internal sealed class FileSystemPackageProvider : IPackageProvider
         _readerRegistry = readerRegistry;
         
         _directoryReader = directoryReader;
+		_fileStreamer = fileStreamer;
         _pathParser = pathParser;
     }
 
@@ -64,15 +68,19 @@ internal sealed class FileSystemPackageProvider : IPackageProvider
             Id = manifest.Id,
             Version = manifest.Version,
             Dependencies = manifest.Dependencies,
-            Content = _contentFactory.Create(discovered.ManifestPath)
+			Storage = _contentFactory.Create(discovered.Directory)
         };
     }
 
     private IEnumerable<DiscoveredManifest> DiscoverManifests()
     {
         foreach (var manifestFile in DiscoverManifestFiles())
-        {
-            var manifest = manifestFile.Reader.ReadManifest(manifestFile.ManifestPath);
+		{
+			using var stream = _fileStreamer.OpenRead(manifestFile.ManifestPath);
+			var manifest = manifestFile.Reader.ReadManifest(stream);
+
+			if (string.IsNullOrWhiteSpace(manifest.Id))
+				manifest.Id = manifestFile.Directory;
 
             yield return new DiscoveredManifest(manifestFile.Directory, manifestFile.ManifestPath, manifest);
         }

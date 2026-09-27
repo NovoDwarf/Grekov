@@ -12,8 +12,8 @@ internal sealed class FileSystemContentFactory
 		_services = services;
 	}
 
-	public IPackageContent Create(string root)
+	public IPackageStorage Create(string root)
 	{
-		return ActivatorUtilities.CreateInstance<FileSystemPackageContent>(_services, root);
+		return ActivatorUtilities.CreateInstance<FileSystemPackageStorage>(_services, root);
 	}
 }

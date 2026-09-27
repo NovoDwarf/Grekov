@@ -6,7 +6,7 @@ using NovoDwarf.FS.Paths.Interfaces;
 
 namespace Grekov.Providers.FileSystem;
 
-internal sealed class FileSystemPackageContent : IPackageContent
+internal sealed class FileSystemPackageStorage : IPackageStorage
 {
     private readonly string _root;
     
@@ -16,7 +16,7 @@ internal sealed class FileSystemPackageContent : IPackageContent
     private readonly IFileStreamer _fileStreamer;
     private readonly IDirectoryReader _directoryReader;
 
-    public FileSystemPackageContent(string root, 
+    public FileSystemPackageStorage(string root,
         IDirectoryReader directoryReader, 
         IPathResolver pathResolver, 
         IPathCombiner pathCombiner, 
