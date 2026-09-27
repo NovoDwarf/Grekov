@@ -6,7 +6,7 @@ namespace Grekov.Providers.Binary;
 
 public static class GrekovProviderBuilderExtensions
 {
-	public static GrekovProviderBuilder FileSystem(this GrekovProviderBuilder builder, Action<BinaryOptions> configure)
+	public static GrekovProviderBuilder Binary(this GrekovProviderBuilder builder, Action<BinaryOptions> configure)
 	{
 		builder.Services.Configure(configure);
 		

@@ -76,7 +76,7 @@ internal sealed class BinaryPackageProvider : IPackageProvider
                 Id = manifest.Id,
                 Version = manifest.Version,
                 Dependencies = manifest.Dependencies,
-                Content = new BinaryPackageContent(archive)
+				Storage = new BinaryPackageStorage(archive)
             };
         }
         catch
