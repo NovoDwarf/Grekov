@@ -12,21 +12,21 @@ public sealed class PackageContext : IPackageContext
 
 	public PackageContext(
 		string packageId,
-		IPackageContent content,
+		IPackageStorage storage,
 		IServiceProvider services, 
 		IReadOnlyList<Assembly> assemblies)
 	{
 
 
 		PackageId = packageId;
-		Content = content;
+		Storage = storage;
 		_services = services;
 		_assemblies = assemblies;
 	}
 
 	public string PackageId { get; }
 
-	public IPackageContent Content { get; }
+	public IPackageStorage Storage { get; }
 
 	public IReadOnlyList<Assembly> Assemblies => _assemblies;
 

@@ -13,25 +13,4 @@
         <PackageReference Include="NovoDwarf.FS" Version="1.0.1" />
     </ItemGroup>
     
-    <ItemGroup>
-      <Compile Remove="Assemblies\Entities\LoadedAssembly.cs" />
-      <Compile Remove="Assemblies\Interfaces\IPackagePathResolver.cs" />
-      <Compile Remove="Assemblies\Services\AssemblyLocator.cs" />
-      <Compile Remove="Core\Enums\PackageContentStage.cs" />
-      <Compile Remove="Core\Enums\PackageState.cs" />
-      <Compile Remove="Defaults\DefaultPackageCatalog.cs" />
-      <Compile Remove="Defaults\DefaultPathResolver.cs" />
-      <Compile Remove="Definitions\Workflow\DefService.cs" />
-      <Compile Remove="Packaging\Entities\PackageSnapshot.cs" />
-      <Compile Remove="Core\Enums\PackageDependencyOperator.cs" />
-      <Compile Remove="Core\Enums\PackageIssueSeverity.cs" />
-      <Compile Remove="Packaging\Interfaces\IPackageCatalog.cs" />
-      <Compile Remove="Packaging\Interfaces\IPackageConflictSink.cs" />
-      <Compile Remove="Packaging\Interfaces\IPackageContentLoader.cs" />
-    </ItemGroup>
-    
-    <ItemGroup>
-      <Folder Include="Definitions\Workflow\" />
-    </ItemGroup>
-    
 </Project>

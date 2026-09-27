@@ -20,7 +20,7 @@ internal sealed class DefScanner
 
 		var result = new List<(string Path, IDefFormatReader Reader)>();
 
-		foreach (var path in package.Content.EnumerateFiles(PackageContentType.Definition))
+		foreach (var path in package.Storage.EnumerateFiles(PackageContentType.Definition))
 		{
 			if (_readers.TryResolve(path, out var reader))
 			{

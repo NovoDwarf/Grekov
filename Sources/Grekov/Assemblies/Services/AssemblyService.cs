@@ -45,7 +45,7 @@ internal sealed class AssemblyService
 	{
 		ArgumentNullException.ThrowIfNull(package);
 
-		return package.Content.EnumerateFiles(PackageContentType.Assembly);
+		return package.Storage.EnumerateFiles(PackageContentType.Assembly);
 	}
 	
 	private void LoadAssembly(string packageId, string path)

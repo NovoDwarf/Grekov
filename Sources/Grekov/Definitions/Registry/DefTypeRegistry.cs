@@ -9,6 +9,8 @@ public sealed class DefTypeRegistry
     private readonly Dictionary<string, Type> _typesByName = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Type> _typesByElementName = new(StringComparer.OrdinalIgnoreCase);
 
+	public IReadOnlyCollection<Type> Types => [.. _typesByName.Values];
+
     public void Refresh(IEnumerable<Assembly> assemblies)
     {
         ArgumentNullException.ThrowIfNull(assemblies);

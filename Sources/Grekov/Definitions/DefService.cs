@@ -1,10 +1,12 @@
-using Grekov.Definitions.Indexing;
 using Grekov.Definitions.Inheritance;
+using Grekov.Definitions.Indexing;
+using Grekov.Definitions.Interfaces;
 using Grekov.Definitions.Materializations;
 using Grekov.Definitions.Models;
 using Grekov.Definitions.Registry;
 using Grekov.Definitions.Scanning;
 using Grekov.Packaging.Entities;
+using Grekov.Packaging.Enums;
 using Grekov.Packaging.Services;
 using NovoDwarf.FS.Paths.Interfaces;
 
@@ -14,7 +16,7 @@ internal sealed class DefService
 {
 	private readonly DefRawIndex _rawIndex;
 	private readonly DefScanner _scanner;
-	private readonly DefIndex _index;
+	private readonly IDefStorage _storage;
 	private readonly DefMaterializer _materializer;
 	private readonly DefInheritanceResolver _inheritance;
 	private readonly DefIssueRegistry _issueRegistry;
@@ -25,7 +27,7 @@ internal sealed class DefService
 	public DefService(DefRawIndex rawIndex, 
 		DefScanner scanner, 
 		IPathParser pathParser, 
-		DefIndex index,
+		IDefStorage storage,
 		DefMaterializer materializer, 
 		DefInheritanceResolver inheritance, 
 		DefConflictRegistry conflictRegistry, DefIssueRegistry issueRegistry)
@@ -34,18 +36,18 @@ internal sealed class DefService
 		_scanner = scanner;
 		
 		_pathParser = pathParser;
-		_index = index;
+		_storage = storage;
 		_materializer = materializer;
 		_inheritance = inheritance;
 		_conflictRegistry = conflictRegistry;
 		_issueRegistry = issueRegistry;
 	}
 
-	public Task Load(IReadOnlyList<PackageInstance> packages)
+	public async Task Load(IReadOnlyList<PackageInstance> packages, CancellationToken cancellationToken = default)
     {
         foreach (var package in packages)
         {
-            LoadPackage(package);
+			await LoadPackage(package, cancellationToken);
             ApplyIssues(package);
         }
 
@@ -54,31 +56,33 @@ internal sealed class DefService
             var resolved = _inheritance.Resolve(raw);
             var definition = _materializer.Materialize(resolved);
 
-            _index.Add(definition);
+			await _storage.AddAsync(definition, cancellationToken);
         }
 
-        return Task.CompletedTask;
-    }
+	}
 
-    public Task Unload(IReadOnlyList<PackageInstance> packages)
+	public async Task Unload(IReadOnlyList<PackageInstance> packages, CancellationToken cancellationToken = default)
     {
         foreach (var package in packages.Reverse())
         {
-            _rawIndex.UnloadPackage(package.Id);
+			await _storage.RemovePackageAsync(package.Id, cancellationToken);
+			_rawIndex.UnloadPackage(package.Id);
             _issueRegistry.UnloadPackage(package.Id);
             _conflictRegistry.UnloadPackage(package.Id);
         }
 
-        return Task.CompletedTask;
-    }
+	}
 
-    private void LoadPackage(PackageInstance package)
+	private async Task LoadPackage(PackageInstance package, CancellationToken cancellationToken)
     {
-        foreach (var (path, reader) in _scanner.Scan(package))
-        {
-            var fallbackId = _pathParser.GetFileNameWithoutExtension(path);
-            var context = new DefReadContext(package.Id, path, fallbackId, []);
-            var definitions = reader.ReadDefinitions(context);
+		foreach (var (path, reader) in _scanner.Scan(package))
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			var fallbackId = _pathParser.GetFileNameWithoutExtension(path);
+			var context = new DefReadContext(package.Id, path, fallbackId, []);
+
+			using var stream = package.Storage.OpenRead(PackageContentType.Definition, path);
+			var definitions = reader.ReadDefinitions(stream, context);
 
             foreach (var definition in definitions)
             {

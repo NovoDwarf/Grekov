@@ -11,9 +11,7 @@ public sealed class DefaultContextFactory : IPackageContextFactory
 	private readonly IServiceProvider _services;
 	private readonly AssemblyRegistry _assemblies;
 
-	public DefaultContextFactory(
-		IServiceProvider services,
-		AssemblyRegistry assemblies)
+	public DefaultContextFactory(IServiceProvider services, AssemblyRegistry assemblies)
 	{
 		_services = services;
 		_assemblies = assemblies;
@@ -25,6 +23,6 @@ public sealed class DefaultContextFactory : IPackageContextFactory
 
 		var packageAssemblies = _assemblies.GetAssemblies(package.Id);
 
-		return new PackageContext(package.Id, package.Content, _services, packageAssemblies);
+		return new PackageContext(package.Id, package.Storage, _services, packageAssemblies);
 	}
 }

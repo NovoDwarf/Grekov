@@ -42,6 +42,9 @@ public static class ServiceCollectionExtensions
 
             configure?.Invoke(builder);
 
+			if (!services.Any(static descriptor => descriptor.ServiceType == typeof(IDefStorage)))
+				throw new InvalidOperationException("Configure exactly one definition storage with GrekovBuilder.Storage.");
+
             return services;
         }
 
@@ -77,7 +80,6 @@ public static class ServiceCollectionExtensions
 
         private IServiceCollection AddGrekovDefinitions()
         {
-            services.TryAddSingleton<DefIndex>();
             services.TryAddSingleton<DefRawIndex>();
             services.TryAddSingleton<IDefReaderRegistry, DefReaderRegistry>();
             services.TryAddSingleton<DefScanner>();
@@ -92,8 +94,6 @@ public static class ServiceCollectionExtensions
             services.TryAddSingleton<DefTypeRegistry>();
             services.TryAddSingleton<DefConflictRegistry>();
             services.TryAddSingleton<DefIssueRegistry>();
-            services.TryAddSingleton<IDefCatalog, DefaultDefCatalog>();
-
             return services;
         }
 

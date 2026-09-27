@@ -42,4 +42,12 @@ public sealed class GrekovBuilder
 
 		return this;
 	}
+
+	public GrekovBuilder Storage(Action<GrekovStorageBuilder> configure)
+	{
+		ArgumentNullException.ThrowIfNull(configure);
+
+		configure(new GrekovStorageBuilder(Services));
+		return this;
+	}
 }
