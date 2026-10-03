@@ -1,10 +1,12 @@
-﻿using Grekov.Definitions.Interfaces;
+﻿using Grekov.Abstractions;
+using Grekov.Abstractions.Attributes;
+using Grekov.Abstractions.Interfaces;
+using Grekov.Abstractions.Interfaces.Definitions;
+using Grekov.Abstractions.Interfaces.Packaging;
 using Grekov.Extensions;
-using Grekov.Packaging.Interfaces;
-using Grekov.Providers.Binary;
 using Grekov.Providers.FileSystem;
 using Grekov.Readers.Xml.Extensions;
-using Grekov.Storage.InMemory;
+using Grekov.Storages.InMemory;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grekov.Example;
@@ -19,6 +21,8 @@ internal static class Program
 
         Console.WriteLine("=== DI ===");
 
+        services.AddLogging();
+        
         await using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
 
         Console.WriteLine($"Registered services : {services.Count}");
@@ -108,8 +112,9 @@ internal static class Program
     }
 }
 
-public sealed class SwordDef : Grekov.Core.Def
+[DefType("Sword")]
+public sealed class SwordDef : Def
 {
-	[Grekov.Core.Attributes.DefField]
+	[DefField]
 	public int Damage { get; set; }
 }
