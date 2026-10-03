@@ -9,10 +9,8 @@ internal sealed class NullValueConverter : IDefValueConverter
 	public bool CanConvert(DefValue value, Type targetType) 
 		=> value.Kind == DefValueKind.Null;
 
-	public object? Convert(DefValue value, Type targetType)
+	public object? Convert(DefValue value, Type targetType, DefValueConverter converter)
 	{
-		ArgumentNullException.ThrowIfNull(targetType);
-
 		if (targetType.IsValueType && Nullable.GetUnderlyingType(targetType) is null)
 			throw new InvalidOperationException($"Cannot assign null to '{targetType.FullName}'.");
 

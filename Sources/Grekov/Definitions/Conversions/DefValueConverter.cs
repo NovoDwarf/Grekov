@@ -1,10 +1,13 @@
 using System.Collections;
+using System.Reflection;
 using Grekov.Core;
+using Grekov.Core.Attributes;
+using Grekov.Core.Enums;
 using Grekov.Definitions.Registry;
 
 namespace Grekov.Definitions.Conversions;
 
-internal sealed class DefValueConverter
+public sealed class DefValueConverter
 {
     private readonly DefValueConverterRegistry _registry;
 
@@ -15,65 +18,13 @@ internal sealed class DefValueConverter
 
     public object? Convert(DefValue value, Type targetType)
     {
-        if (targetType.IsGenericType)
-        {
-            var genericType = targetType.GetGenericTypeDefinition();
-
-            if (genericType == typeof(Dictionary<,>))
-                return ConvertDictionary(value, targetType);
-
-            if (genericType == typeof(List<>))
-                return ConvertList(value, targetType);
-        }
-
         foreach (var converter in _registry.Converters)
         {
             if (converter.CanConvert(value, targetType))
-            {
-                return converter.Convert(value, targetType);
-            }
+                return converter.Convert(value, targetType, this);
         }
 
         throw new NotSupportedException(
             $"Cannot convert [{value.Kind}] to [{targetType}].");
-    }
-
-    private object ConvertDictionary(DefValue value, Type targetType)
-    {
-        var entries = value.Object ?? throw new InvalidOperationException("Expected object value.");
-
-        var arguments = targetType.GetGenericArguments();
-
-        var keyType = arguments[0];
-        var valueType = arguments[1];
-
-        var dictionaryType = typeof(Dictionary<,>).MakeGenericType(keyType, valueType);
-        var dictionary = (IDictionary)Activator.CreateInstance(dictionaryType)!;
-
-        foreach (var entry in entries)
-        {
-            var key = Convert(DefValue.ScalarValue(entry.Key), keyType);
-            var item = Convert(entry.Value, valueType);
-
-            dictionary.Add(key!, item);
-        }
-
-        return dictionary;
-    }
-
-    private object ConvertList(DefValue value, Type targetType)
-    {
-        var values = value.List ?? throw new InvalidOperationException("Expected list value.");
-
-        var itemType = targetType.GetGenericArguments()[0];
-        var listType = typeof(List<>).MakeGenericType(itemType);
-        var list = (IList)Activator.CreateInstance(listType)!;
-
-        foreach (var item in values)
-        {
-            list.Add(Convert(item, itemType));
-        }
-
-        return list;
     }
 }

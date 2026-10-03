@@ -12,7 +12,7 @@ internal sealed class EnumValueConverter : IDefValueConverter
 		return DefValueConversion.IsScalar(value) && actualType.IsEnum;
 	}
 
-	public object Convert(DefValue value, Type targetType)
+	public object? Convert(DefValue value, Type targetType, DefValueConverter converter)
 	{
 		var enumType = DefValueConversion.UnwrapNullable(targetType);
 		var scalar = value.Scalar!;

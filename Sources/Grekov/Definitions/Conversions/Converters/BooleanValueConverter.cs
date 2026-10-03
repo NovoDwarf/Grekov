@@ -10,7 +10,7 @@ internal sealed class BooleanValueConverter : IDefValueConverter
 		return DefValueConversion.IsScalar(value) && DefValueConversion.UnwrapNullable(targetType) == typeof(bool);
 	}
 
-	public object Convert(DefValue value, Type targetType)
+	public object? Convert(DefValue value, Type targetType, DefValueConverter converter)
 	{
 		var scalar = value.Scalar!;
 

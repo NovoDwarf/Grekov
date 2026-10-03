@@ -12,10 +12,9 @@ internal sealed class DefRefValueConverter : IDefValueConverter
 		return DefValueConversion.IsScalar(value) && IsDefRef(actualType);
 	}
 
-	public object Convert(DefValue value, Type targetType)
+	public object? Convert(DefValue value, Type targetType, DefValueConverter converter)
 	{
 		var actualType = DefValueConversion.UnwrapNullable(targetType);
-
 		var text = DefValueConversion.ToInvariantString(value.Scalar!);
 		var id = DefId.Parse(text);
 

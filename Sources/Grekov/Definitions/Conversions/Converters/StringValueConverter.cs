@@ -8,6 +8,6 @@ internal sealed class StringValueConverter : IDefValueConverter
 	public bool CanConvert(DefValue value, Type targetType) 
 		=> DefValueConversion.IsScalar(value) && DefValueConversion.UnwrapNullable(targetType) == typeof(string);
 
-	public object? Convert(DefValue value, Type targetType) 
+	public object? Convert(DefValue value, Type targetType, DefValueConverter converter)
 		=> DefValueConversion.ToInvariantString(value.Scalar!);
 }

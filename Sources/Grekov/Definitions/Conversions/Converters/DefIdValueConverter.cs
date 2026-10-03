@@ -8,7 +8,7 @@ internal sealed class DefIdValueConverter : IDefValueConverter
 	public bool CanConvert(DefValue value, Type targetType) 
 		=> DefValueConversion.IsScalar(value) && DefValueConversion.UnwrapNullable(targetType) == typeof(DefId);
 
-	public object Convert(DefValue value, Type targetType)
+	public object? Convert(DefValue value, Type targetType, DefValueConverter converter)
 	{
 		var text = DefValueConversion.ToInvariantString(value.Scalar!);
 

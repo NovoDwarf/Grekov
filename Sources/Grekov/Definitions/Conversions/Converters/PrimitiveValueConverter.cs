@@ -16,7 +16,7 @@ internal sealed class PrimitiveValueConverter : IDefValueConverter
 		return actualType.IsPrimitive || actualType == typeof(decimal);
 	}
 
-	public object Convert(DefValue value, Type targetType)
+	public object? Convert(DefValue value, Type targetType, DefValueConverter converter)
 	{
 		var actualType = DefValueConversion.UnwrapNullable(targetType);
 
