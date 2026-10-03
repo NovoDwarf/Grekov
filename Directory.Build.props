@@ -6,6 +6,12 @@
     </PropertyGroup>
 
     <PropertyGroup>
+        <GrekovAbstractionsVersion>1.2.0-dev2</GrekovAbstractionsVersion>
+        <GrekovAbstractionsAssemblyVersion>1.2.0.2</GrekovAbstractionsAssemblyVersion>
+        <GrekovAbstractionsFileVersion>1.2.0.2</GrekovAbstractionsFileVersion>
+    </PropertyGroup>
+    
+    <PropertyGroup>
         <GrekovBinaryVersion>1.2.0-dev1</GrekovBinaryVersion>
         <GrekovBinaryAssemblyVersion>1.2.0.1</GrekovBinaryAssemblyVersion>
         <GrekovBinaryFileVersion>1.2.0.1</GrekovBinaryFileVersion>
