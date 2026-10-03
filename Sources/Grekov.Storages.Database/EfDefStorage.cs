@@ -91,14 +91,16 @@ internal sealed class EfDefStorage : IDefStorage
         return (Def?)WithContext(context => context.Find(type, id));
     }
 
+    [Obsolete]
     public bool TryGet<T>(DefId id, out T? definition) where T : Def
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException(); // TODO:
     }
 
+    [Obsolete]
     public bool TryGet(Type type, DefId id, out Def? definition)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException(); // TODO:
     }
 
     public IEnumerable<T> GetByPackage<T>(string packageId) where T : Def
