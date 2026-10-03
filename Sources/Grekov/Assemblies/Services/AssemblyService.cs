@@ -19,7 +19,7 @@ internal sealed class AssemblyService
 		_pathParser = pathParser;
 	}
 
-	public async Task Load(IReadOnlyList<PackageInstance> packages, CancellationToken token = default)
+	public async Task LoadAsync(IReadOnlyList<PackageInstance> packages, CancellationToken token = default)
 	{
 		foreach (var package in packages)
 		foreach (var path in Locate(package))
@@ -28,7 +28,7 @@ internal sealed class AssemblyService
 		}
 	}
 
-	public async Task Unload(IReadOnlyList<PackageInstance> packages, CancellationToken token = default)
+	public async Task UnloadAsync(IReadOnlyList<PackageInstance> packages, CancellationToken token = default)
 	{
 		foreach (var package in packages.Reverse())
 		{
@@ -45,7 +45,7 @@ internal sealed class AssemblyService
 	{
 		ArgumentNullException.ThrowIfNull(package);
 
-		return package.Storage.EnumerateFiles(PackageContentType.Assembly);
+		return package.Container.EnumerateFiles(PackageContentType.Assembly);
 	}
 	
 	private void LoadAssembly(string packageId, string path)

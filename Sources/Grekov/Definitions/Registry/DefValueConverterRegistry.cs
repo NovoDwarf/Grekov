@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Grekov.Definitions.Registry;
 
-internal sealed class DefValueConverterRegistry
+public sealed class DefValueConverterRegistry
 {
 	private readonly IServiceProvider _services;
 

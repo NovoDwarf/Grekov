@@ -25,35 +25,27 @@ internal sealed class EntrypointService
         _contextFactory = contextFactory;
     }
 
-    public Task Load(IReadOnlyList<PackageInstance> packages)
+    public Task LoadAsync(IReadOnlyList<PackageInstance> packages)
     {
-        ArgumentNullException.ThrowIfNull(packages);
-
         foreach (var package in packages)
             LoadPackage(package);
 
         return Task.CompletedTask;
     }
     
-    public Task Unload(IReadOnlyList<PackageInstance> packages)
+    public Task UnloadAsync(IReadOnlyList<PackageInstance> packages)
     {
-        ArgumentNullException.ThrowIfNull(packages);
-
         foreach (var package in packages.Reverse())
             UnloadPackage(package);
 
         return Task.CompletedTask;
     }
     
-    public Task NotifyLoaded(IReadOnlyList<PackageInstance> packages)
+    public Task NotifyLoadedAsync(IReadOnlyList<PackageInstance> packages)
     {
-        ArgumentNullException.ThrowIfNull(packages);
-
         foreach (var package in packages)
         {
-            if (_entrypoints.TryGetValue(
-                    package.Id,
-                    out var loaded))
+            if (_entrypoints.TryGetValue(package.Id, out var loaded))
             {
                 loaded.Entrypoint.OnLoaded();
             }

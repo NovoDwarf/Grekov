@@ -11,6 +11,4 @@ public sealed class DefFieldAttribute : Attribute
 	public string? Name { get; }
 	
 	public bool Required { get; init; }
-	
-	public string? ItemName { get; init; }
 }

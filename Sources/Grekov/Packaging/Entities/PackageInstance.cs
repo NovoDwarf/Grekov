@@ -8,7 +8,7 @@ public sealed class PackageInstance
 	public required string Id { get; init; }
 	public required string Version { get; init; }
 	public required IReadOnlyList<PackageDependency> Dependencies { get; init; }
-	public required IPackageStorage Storage { get; init; }
+	public required IPackageContainer Container { get; init; }
 	
 	public List<PackageIssue> Issues { get; } = [];
 
@@ -17,5 +17,5 @@ public sealed class PackageInstance
 	
 	public void AddIssue(PackageIssue issue) => Issues.Add(issue);
 	
-	public void Dispose() => Storage.Dispose();
+	public void Dispose() => Container.Dispose();
 }

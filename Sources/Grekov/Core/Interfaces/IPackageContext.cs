@@ -8,7 +8,7 @@ public interface IPackageContext
 {
 	public string PackageId { get; }
 
-	public IPackageStorage Storage { get; }
+	public IPackageContainer Container { get; }
 
 	public IReadOnlyList<Assembly> Assemblies { get; }
 

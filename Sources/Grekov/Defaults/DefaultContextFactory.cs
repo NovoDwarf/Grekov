@@ -23,6 +23,6 @@ public sealed class DefaultContextFactory : IPackageContextFactory
 
 		var packageAssemblies = _assemblies.GetAssemblies(package.Id);
 
-		return new PackageContext(package.Id, package.Storage, _services, packageAssemblies);
+		return new PackageContext(package.Id, package.Container, _services, packageAssemblies);
 	}
 }

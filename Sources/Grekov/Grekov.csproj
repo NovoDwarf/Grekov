@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <Version>1.2.0-dev1</Version>
-        <AssemblyVersion>1.2.0.1</AssemblyVersion>
-        <FileVersion>1.2.0.1</FileVersion>    
+        <Version>$(GrekovVersion)</Version>
+        <AssemblyVersion>$(GrekovAssemblyVersion)</AssemblyVersion>
+        <FileVersion>$(GrekovAssemblyVersion)</FileVersion>    
     </PropertyGroup>
     
     <ItemGroup>

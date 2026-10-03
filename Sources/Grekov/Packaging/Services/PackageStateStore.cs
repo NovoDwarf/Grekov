@@ -17,6 +17,6 @@ internal sealed class PackageStateStore
 
 	public async Task Save(CancellationToken state)
 	{
-		// persistent storage
+		// persistent container
 	}
 }

@@ -2,7 +2,7 @@ namespace Grekov;
 
 public interface IGrekovService
 {
-	Task Start(CancellationToken token = default);
+	public Task StartAsync(CancellationToken token = default);
 
-	Task Stop(CancellationToken token = default);
+	public Task StopAsync(CancellationToken token = default);
 }

@@ -43,7 +43,7 @@ public static class ServiceCollectionExtensions
             configure?.Invoke(builder);
 
 			if (!services.Any(static descriptor => descriptor.ServiceType == typeof(IDefStorage)))
-				throw new InvalidOperationException("Configure exactly one definition storage with GrekovBuilder.Storage.");
+				throw new InvalidOperationException("Configure exactly one definition container with GrekovBuilder.Container.");
 
             return services;
         }

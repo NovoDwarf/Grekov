@@ -15,7 +15,7 @@ public sealed class GrekovStorageBuilder
 	public GrekovStorageBuilder Use<TStorage>() where TStorage : class, IDefStorage
 	{
 		if (Services.Any(static descriptor => descriptor.ServiceType == typeof(IDefStorage)))
-			throw new InvalidOperationException("A definition storage has already been configured.");
+			throw new InvalidOperationException("A definition container has already been configured.");
 
 		Services.AddSingleton<IDefStorage, TStorage>();
 		Services.AddSingleton<IDefCatalog>(static provider => provider.GetRequiredService<IDefStorage>());

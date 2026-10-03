@@ -26,7 +26,7 @@ internal sealed class PackageService : IPackageService
     public IReadOnlyList<PackageInstance> Packages => _stateStore.Packages;
     public IReadOnlyList<PackageInstance> LoadOrder => _stateStore.LoadOrder;
 
-    public async Task Load(CancellationToken token = default)
+    public async Task LoadAsync(CancellationToken token = default)
     {
         var discovery = await Discover(token);
         var state = await _stateStore.Load(token);
@@ -37,7 +37,7 @@ internal sealed class PackageService : IPackageService
         await _stateStore.Save(token);
     }
 
-    public Task Unload(CancellationToken token = default)
+    public Task UnloadAsync(CancellationToken token = default)
     {
         _stateStore.Packages.Clear();
         _stateStore.PackagesById.Clear();

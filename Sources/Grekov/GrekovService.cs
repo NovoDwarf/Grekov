@@ -38,32 +38,34 @@ internal sealed class GrekovService : IGrekovService
 		_entrypoints = entrypoints;
 	}
 
-	public async Task Start(CancellationToken token = default)
+	public async Task StartAsync(CancellationToken token = default)
 	{
-		await _packages.Load(token);
+		await _packages.LoadAsync(token);
 
 		var packages = GetActivePackages();
 		
-		await _assemblies.Load(packages, token);
-		_defTypes.Refresh(_assemblyRegistry.GetAllAssemblies());
-		await _storage.Load(_defTypes.Types, token);
-		await _entrypoints.Load(packages);
-		await _defs.Load(packages, token);
-		await _localization.Load(packages);
+		await _assemblies.LoadAsync(packages, token);
 		
-		await _entrypoints.NotifyLoaded(packages);
+		_defTypes.Refresh(_assemblyRegistry.GetAllAssemblies());
+		
+		await _storage.LoadAsync(_defTypes.Types, token);
+		await _entrypoints.LoadAsync(packages);
+		await _defs.LoadAsync(packages, token);
+		await _localization.LoadAsync(packages);
+		
+		await _entrypoints.NotifyLoadedAsync(packages);
 	}
 
-	public async Task Stop(CancellationToken token = default)
+	public async Task StopAsync(CancellationToken token = default)
 	{
 		var packages = GetActivePackages();
 		
-		await _localization.Unload(packages);
-		await _defs.Unload(packages, token);
-		await _entrypoints.Unload(packages);
-		await _assemblies.Unload(packages, token);
-		await _packages.Unload(token);
-		await _storage.ClearAsync(token);
+		await _localization.UnloadAsync(packages);
+		await _defs.UnloadAsync(packages, token);
+		await _entrypoints.UnloadAsync(packages);
+		await _assemblies.UnloadAsync(packages, token);
+		await _packages.UnloadAsync(token);
+		await _storage.UnloadAsync(token);
 	}
 	
 	private IReadOnlyList<PackageInstance> GetActivePackages() 

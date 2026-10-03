@@ -2,10 +2,7 @@ using Grekov.Packaging.Enums;
 
 namespace Grekov.Packaging.Interfaces;
 
-/// <summary>
-/// Provides read access to the data that belongs to a package.
-/// </summary>
-public interface IPackageStorage : IDisposable
+public interface IPackageContainer : IDisposable
 {
 	bool Exists(PackageContentType type, string path);
 

@@ -1,3 +1,4 @@
+using Grekov.Core;
 using Grekov.Definitions.Inheritance;
 using Grekov.Definitions.Indexing;
 using Grekov.Definitions.Interfaces;
@@ -7,7 +8,6 @@ using Grekov.Definitions.Registry;
 using Grekov.Definitions.Scanning;
 using Grekov.Packaging.Entities;
 using Grekov.Packaging.Enums;
-using Grekov.Packaging.Services;
 using NovoDwarf.FS.Paths.Interfaces;
 
 namespace Grekov.Definitions;
@@ -43,25 +43,29 @@ internal sealed class DefService
 		_issueRegistry = issueRegistry;
 	}
 
-	public async Task Load(IReadOnlyList<PackageInstance> packages, CancellationToken cancellationToken = default)
+	public async Task LoadAsync(IReadOnlyList<PackageInstance> packages, CancellationToken cancellationToken = default)
     {
         foreach (var package in packages)
         {
-			await LoadPackage(package, cancellationToken);
+			await LoadPackageAsync(package, cancellationToken);
             ApplyIssues(package);
         }
+
+        var definitions = new List<Def>();
 
         foreach (var raw in _rawIndex.All)
         {
             var resolved = _inheritance.Resolve(raw);
             var definition = _materializer.Materialize(resolved);
 
-			await _storage.AddAsync(definition, cancellationToken);
+            definitions.Add(definition);
         }
+        
+        await _storage.AddRangeAsync(definitions, cancellationToken);
 
 	}
 
-	public async Task Unload(IReadOnlyList<PackageInstance> packages, CancellationToken cancellationToken = default)
+	public async Task UnloadAsync(IReadOnlyList<PackageInstance> packages, CancellationToken cancellationToken = default)
     {
         foreach (var package in packages.Reverse())
         {
@@ -70,10 +74,9 @@ internal sealed class DefService
             _issueRegistry.UnloadPackage(package.Id);
             _conflictRegistry.UnloadPackage(package.Id);
         }
-
 	}
 
-	private async Task LoadPackage(PackageInstance package, CancellationToken cancellationToken)
+	private async Task LoadPackageAsync(PackageInstance package, CancellationToken cancellationToken)
     {
 		foreach (var (path, reader) in _scanner.Scan(package))
 		{
@@ -81,7 +84,7 @@ internal sealed class DefService
 			var fallbackId = _pathParser.GetFileNameWithoutExtension(path);
 			var context = new DefReadContext(package.Id, path, fallbackId, []);
 
-			using var stream = package.Storage.OpenRead(PackageContentType.Definition, path);
+			using var stream = package.Container.OpenRead(PackageContentType.Definition, path);
 			var definitions = reader.ReadDefinitions(stream, context);
 
             foreach (var definition in definitions)
