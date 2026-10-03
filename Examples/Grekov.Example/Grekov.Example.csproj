@@ -10,6 +10,7 @@
       <ProjectReference Include="..\..\Sources\Grekov.Providers.Binary\Grekov.Providers.Binary.csproj" />
       <ProjectReference Include="..\..\Sources\Grekov.Providers.FileSystem\Grekov.Providers.FileSystem.csproj" />
       <ProjectReference Include="..\..\Sources\Grekov.Readers.Xml\Grekov.Readers.Xml.csproj" />
+      <ProjectReference Include="..\..\Sources\Grekov.Storages.InMemory\Grekov.Storages.InMemory.csproj" />
       <ProjectReference Include="..\..\Sources\Grekov\Grekov.csproj" />
     </ItemGroup>
 

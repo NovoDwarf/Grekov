@@ -2,7 +2,9 @@
 using Grekov.Extensions;
 using Grekov.Packaging.Interfaces;
 using Grekov.Providers.Binary;
+using Grekov.Providers.FileSystem;
 using Grekov.Readers.Xml.Extensions;
+using Grekov.Storage.InMemory;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grekov.Example;
@@ -28,7 +30,7 @@ internal static class Program
 
         Console.WriteLine("=== START ===");
 
-        await grekov.Start();
+        await grekov.StartAsync();
 
         Console.WriteLine("[OK] Grekov started.");
         Console.WriteLine();
@@ -45,7 +47,7 @@ internal static class Program
         Console.WriteLine();
         Console.WriteLine("=== STOP ===");
 
-        await grekov.Stop();
+        await grekov.StopAsync();
 
         Console.WriteLine("[OK] Grekov stopped.");
     }
@@ -54,9 +56,14 @@ internal static class Program
     {
         services.AddGrekov(grekov =>
         {
-            grekov.Configure(options => options.ManifestName = "Manifest");
+			grekov.Configure(options =>
+			{
+				options.ManifestName = "Manifest";
+				options.AdditionalAssemblies.Add(typeof(SwordDef).Assembly);
+			});
             grekov.Readers(readers => readers.Xml());
             grekov.Providers(providers => providers.FileSystem(opt => opt.Roots.Add(Path.Combine(AppContext.BaseDirectory, "Content", "Packages"))));
+			grekov.Storage(storage => storage.InMemory());
         });
     }
 
@@ -99,4 +106,10 @@ internal static class Program
         Console.WriteLine($"Catalog: {catalog.GetType().Name}");
         Console.WriteLine("[OK] IDefCatalog resolved from DI.");
     }
+}
+
+public sealed class SwordDef : Grekov.Core.Def
+{
+	[Grekov.Core.Attributes.DefField]
+	public int Damage { get; set; }
 }
