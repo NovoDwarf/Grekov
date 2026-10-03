@@ -2,16 +2,18 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using Grekov.Core;
+using Grekov.Core.Enums;
 using Grekov.Definitions.Interfaces;
 using Grekov.Definitions.Models;
 using Grekov.Definitions.Registry;
 using Grekov.Packaging.Entities;
+using Microsoft.Extensions.Logging;
 using NovoDwarf.FS.Files.Interfaces;
 using NovoDwarf.FS.Paths.Interfaces;
 
 namespace Grekov.Readers.Xml;
 
-internal sealed class DefXmlReader : IDefFormatReader
+public sealed class DefXmlReader : IDefFormatReader
 {
 	private static readonly IReadOnlySet<string> SupportedExtensions = new HashSet<string>([".xml"], StringComparer.OrdinalIgnoreCase);
 	private static readonly IReadOnlySet<string> ReservedAttributes = new HashSet<string>(["Id", "Parent"], StringComparer.OrdinalIgnoreCase);
@@ -23,16 +25,21 @@ internal sealed class DefXmlReader : IDefFormatReader
 
 	private readonly DefIssueRegistry _issueRegistry;
 	private readonly DefTypeRegistry _typeRegistry;
-
+	
+	private readonly ILogger<DefXmlReader> _logger;
+	
 	public DefXmlReader(
 		DefTypeRegistry typeRegistry,
 		IPathParser pathParser,
-		IFileStreamer fileStreamer, DefIssueRegistry issueRegistry)
+		IFileStreamer fileStreamer, 
+		DefIssueRegistry issueRegistry, 
+		ILogger<DefXmlReader> logger)
 	{
 		_typeRegistry = typeRegistry;
 		_pathParser = pathParser;
 		_fileStreamer = fileStreamer;
 		_issueRegistry = issueRegistry;
+		_logger = logger;
 	}
 
 	public IReadOnlySet<string> Extensions => SupportedExtensions;
@@ -42,31 +49,22 @@ internal sealed class DefXmlReader : IDefFormatReader
 		ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
 
 		using var stream = _fileStreamer.OpenRead(manifestPath);
-
 		return ReadManifest(stream, manifestPath);
 	}
 
 	public PackageManifest ReadManifest(Stream stream)
 	{
-		ArgumentNullException.ThrowIfNull(stream);
-
 		return ReadManifest(stream, "<stream>");
 	}
 
 	public IReadOnlyList<DefRaw> ReadDefinitions(DefReadContext context)
 	{
-		ArgumentNullException.ThrowIfNull(context);
-
 		using var stream = _fileStreamer.OpenRead(context.ResourcePath);
-
 		return ReadDefinitions(stream, context);
 	}
 
 	public IReadOnlyList<DefRaw> ReadDefinitions(Stream stream, DefReadContext context)
 	{
-		ArgumentNullException.ThrowIfNull(stream);
-		ArgumentNullException.ThrowIfNull(context);
-
 		var document = XDocument.Load(stream, LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace);
 
 		if (document.Root is null)
@@ -174,8 +172,11 @@ internal sealed class DefXmlReader : IDefFormatReader
 	{
 		var fields = new Dictionary<string, DefValue>(StringComparer.OrdinalIgnoreCase);
 
+		if (_logger.IsEnabled(LogLevel.Debug))
+			LogValue("Definition", DefValue.ObjectValue(fields));
+		
 		ReadAttributes(element, fields, context);
-		ReadChildElements(element, fields, context);
+		ReadChildElements(element, fields, context, element.Name.LocalName);
 
 		return fields;
 	}
@@ -193,55 +194,47 @@ internal sealed class DefXmlReader : IDefFormatReader
 		}
 	}
 
-	private void ReadChildElements(XElement element, Dictionary<string, DefValue> fields, DefReadContext context)
+	private void ReadChildElements(XElement element, Dictionary<string, DefValue> fields, DefReadContext context, string path)
 	{
-		foreach (var group in element.Elements().GroupBy(child => child.Name.LocalName, StringComparer.OrdinalIgnoreCase))
+		foreach (var group in element.Elements().GroupBy(static child => child.Name.LocalName, StringComparer.OrdinalIgnoreCase))
 		{
 			var children = group.ToArray();
+			var childPath = $"{path}.{group.Key}";
 			var value = children.Length == 1
-					? ReadElementValue(children[0], context)
-					: DefValue.ListValue([.. children.Select(child => ReadElementValue(child, context))]);
+				? ReadElementValue(children[0], context, childPath)
+				: DefValue.ListValue([.. children.Select(child => ReadElementValue(child, context, childPath))]);
+
+			if (_logger.IsEnabled(LogLevel.Trace)) 
+				_logger.LogTrace("XML [{Element}] -> field [{Field}] -> {Kind} ({Count})", element.Name.LocalName, group.Key, value.Kind, value.Kind == DefValueKind.List ? value.List!.Count : 1);
 
 			AddField(fields, group.Key, value, element, context);
 		}
 	}
 
-	private DefValue ReadElementValue(XElement element, DefReadContext context)
+	private DefValue ReadElementValue(XElement element, DefReadContext context, string path)
 	{
 		var childElements = element.Elements().ToArray();
 		var attributes = element.Attributes().ToArray();
-
-		if (childElements.Length == 0 && attributes.Length == 0) 
+    
+		if (childElements.Length == 0 && attributes.Length == 0)
 			return DefValue.ScalarValue(element.Value.Trim());
 
 		var fields = new Dictionary<string, DefValue>(StringComparer.OrdinalIgnoreCase);
 
-		foreach (var attribute in attributes)
+		foreach (var attribute in attributes) 
 			AddField(fields, attribute.Name.LocalName, DefValue.ScalarValue(attribute.Value), element, context);
 
-		foreach (var group in childElements.GroupBy(child => child.Name.LocalName, StringComparer.OrdinalIgnoreCase))
-		{
-			var children = group.ToArray();
-			var value = children.Length == 1 ? ReadElementValue(children[0], context)
-					: DefValue.ListValue([.. children.Select(child => ReadElementValue(child, context))]);
-
-			AddField(fields, group.Key, value, element, context);
-		}
+		ReadChildElements(element, fields, context, path);
 
 		return DefValue.ObjectValue(fields);
 	}
 
-	private void AddField(
-		Dictionary<string, DefValue> fields,
-		string name,
-		DefValue value,
-		XElement element,
-		DefReadContext context)
+	private void AddField(Dictionary<string, DefValue> fields, string name, DefValue value, XElement element, DefReadContext context)
 	{
 		if (fields.TryAdd(name, value))
 			return;
 
-		_issueRegistry.Add( DefIssues.DuplicateField(context.PackageId, context.ResourcePath, name, GetLine(element), GetColumn(element)));
+		_issueRegistry.Add(DefIssues.DuplicateField(context.PackageId, context.ResourcePath, name, GetLine(element), GetColumn(element)));
 	}
 
 	private string? GetStructuralValue(XElement element, string name, DefReadContext context)
@@ -282,5 +275,27 @@ internal sealed class DefXmlReader : IDefFormatReader
 		return lineInfo.HasLineInfo()
 			? lineInfo.LinePosition
 			: null;
+	}
+	
+	private void LogValue(string name, DefValue value, int depth = 0)
+	{
+		var indent = new string(' ', depth * 2);
+
+		switch (value.Kind)
+		{
+			case DefValueKind.Null: _logger.LogIndentNameNull(indent, name); break;
+			case DefValueKind.Scalar: _logger.LogIndentNameScalarValue(indent, name, value.Scalar); break;
+			case DefValueKind.Object: _logger.LogIndentNameObject(indent, name);
+				foreach (var entry in value.Object!)
+					LogValue(entry.Key, entry.Value, depth + 1);
+
+				break;
+
+			case DefValueKind.List: _logger.LogIndentNameListCount(indent, name, value.List!.Count);
+				for (var i = 0; i < value.List.Count; i++)
+					LogValue($"[{i}]", value.List[i], depth + 1);
+
+				break;
+		}
 	}
 }
