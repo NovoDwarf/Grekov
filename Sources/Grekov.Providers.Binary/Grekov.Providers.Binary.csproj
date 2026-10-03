@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <Version>1.2.0-dev1</Version>
-        <AssemblyVersion>1.2.0.1</AssemblyVersion>
-        <FileVersion>1.2.0.1</FileVersion>
+        <Version>$(GrekovProviderBinaryVersion)</Version>
+        <AssemblyVersion>$(GrekovProviderBinaryAssemblyVersion)</AssemblyVersion>
+        <FileVersion>$(GrekovProviderBinaryAssemblyVersion)</FileVersion>
     </PropertyGroup>
-
+    
     <ItemGroup>
       <ProjectReference Include="..\Grekov.Binary\Grekov.Binary.csproj" />
       <ProjectReference Include="..\Grekov\Grekov.csproj" />

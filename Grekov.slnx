@@ -5,6 +5,7 @@
   </Folder>
   <Folder Name="/Sources/" />
   <Folder Name="/Sources/Core/">
+    <Project Path="Sources/Grekov.Abstractions/Grekov.Abstractions.csproj" />
     <Project Path="Sources/Grekov.Binary/Grekov.Binary.csproj" />
     <Project Path="Sources/Grekov/Grekov.csproj" />
   </Folder>
@@ -19,8 +20,8 @@
     <Project Path="Sources/Grekov.Readers.Yaml/Grekov.Readers.Yaml.csproj" />
   </Folder>
   <Folder Name="/Sources/Storages/">
-    <Project Path="Sources/Grekov.Storage.InMemory/Grekov.Storage.InMemory.csproj" />
     <Project Path="Sources/Grekov.Storages.Database/Grekov.Storages.Database.csproj" />
+    <Project Path="Sources/Grekov.Storages.InMemory/Grekov.Storages.InMemory.csproj" />
   </Folder>
   <Folder Name="/Tests/" />
 </Solution>

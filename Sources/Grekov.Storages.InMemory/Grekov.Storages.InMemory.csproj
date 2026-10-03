@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Version>$(GrekovStorageInMemoryVersion)</Version>
+        <AssemblyVersion>$(GrekovStorageInMemoryAssemblyVersion)</AssemblyVersion>
+        <FileVersion>$(GrekovStorageInMemoryAssemblyVersion)</FileVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Grekov\Grekov.csproj" />
+    </ItemGroup>
+
+</Project>

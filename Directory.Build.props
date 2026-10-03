@@ -1,4 +1,33 @@
 <Project>
+    <PropertyGroup>
+        <GrekovVersion>1.2.0-dev2</GrekovVersion>
+        <GrekovAssemblyVersion>1.2.0.2</GrekovAssemblyVersion>
+        <GrekovFileVersion>1.2.0.2</GrekovFileVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GrekovBinaryVersion>1.2.0-dev1</GrekovBinaryVersion>
+        <GrekovBinaryAssemblyVersion>1.2.0.1</GrekovBinaryAssemblyVersion>
+        <GrekovBinaryFileVersion>1.2.0.1</GrekovBinaryFileVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GrekovProviderBinaryVersion>1.2.0-dev1</GrekovProviderBinaryVersion>
+        <GrekovProviderBinaryAssemblyVersion>1.2.0.1</GrekovProviderBinaryAssemblyVersion>
+        <GrekovProviderBinaryFileVersion>1.2.0.1</GrekovProviderBinaryFileVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GrekovProviderFSVersion>1.2.0-dev1</GrekovProviderFSVersion>
+        <GrekovProviderFSAssemblyVersion>1.2.0.1</GrekovProviderFSAssemblyVersion>
+        <GrekovProviderFSFileVersion>1.2.0.1</GrekovProviderFSFileVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GrekovReaderXmlVersion>1.2.0-dev1</GrekovReaderXmlVersion>
+        <GrekovReaderXmlAssemblyVersion>1.2.0.1</GrekovReaderXmlAssemblyVersion>
+        <GrekovReaderXmlFileVersion>1.2.0.1</GrekovReaderXmlFileVersion>
+    </PropertyGroup>
     
     <PropertyGroup>
         <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
