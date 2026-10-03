@@ -8,6 +8,7 @@ internal sealed class DefModelCacheKeyFactory : IModelCacheKeyFactory
 	public object Create(DbContext context, bool designTime)
 	{
 		var definitions = (DefDbContext)context;
+		
 		return (context.GetType(), definitions.SchemaKey, designTime);
 	}
 }

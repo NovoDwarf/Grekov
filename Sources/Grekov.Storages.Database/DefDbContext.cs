@@ -56,7 +56,7 @@ internal sealed class DefDbContext : DbContext
 			{
 				throw new InvalidOperationException(
 					$"Definition field [{type.FullName}.{property.Name}] has unsupported database type [{property.PropertyType.FullName}]. " +
-					"The initial database storage supports scalar fields only.");
+				                                    "The initial database container supports scalar fields only.");
 			}
 
 			yield return property;

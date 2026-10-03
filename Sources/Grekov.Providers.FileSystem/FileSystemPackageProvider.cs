@@ -68,7 +68,7 @@ internal sealed class FileSystemPackageProvider : IPackageProvider
             Id = manifest.Id,
             Version = manifest.Version,
             Dependencies = manifest.Dependencies,
-			Storage = _contentFactory.Create(discovered.Directory)
+			Container = _contentFactory.Create(discovered.Directory)
         };
     }
 

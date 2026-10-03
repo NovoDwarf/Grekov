@@ -4,11 +4,11 @@ using Grekov.Packaging.Interfaces;
 
 namespace Grekov.Providers.Binary;
 
-internal sealed class BinaryPackageStorage : IPackageStorage
+internal sealed class BinaryPackageContainer : IPackageContainer
 {
 	private readonly GpakArchive _archive;
 
-	public BinaryPackageStorage(GpakArchive archive)
+	public BinaryPackageContainer(GpakArchive archive)
 	{
 		ArgumentNullException.ThrowIfNull(archive);
 
@@ -17,22 +17,18 @@ internal sealed class BinaryPackageStorage : IPackageStorage
 
 	public bool Exists(PackageContentType type, string path)
 	{
-		ArgumentException.ThrowIfNullOrWhiteSpace(path);
-
 		var section = GetSectionType(type);
 		return _archive.HasSection(section) && _archive.TryGetEntry(section, path, out _);
 	}
 
 	public Stream OpenRead(PackageContentType type, string path)
 	{
-		ArgumentException.ThrowIfNullOrWhiteSpace(path);
-
 		var section = GetSectionType(type);
 
 		if (_archive.HasSection(section) && _archive.TryGetEntry(section, path, out var entry))
 			return _archive.OpenEntry(section, entry);
 
-		throw new FileNotFoundException($"Package file [{path}] was not found in [{type}] storage.");
+		throw new FileNotFoundException($"Package file [{path}] was not found in [{type}] container.");
 	}
 
 	public IReadOnlyList<string> EnumerateFiles(PackageContentType type, string path = "")
