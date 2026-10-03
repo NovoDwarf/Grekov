@@ -2,9 +2,9 @@ namespace Grekov.Abstractions.Interfaces.Definitions;
 
 public interface IDefCatalog
 {
-	public T? Get<T>(DefId id) where T : Def;
+	public T Get<T>(DefId id) where T : Def;
 
-	public T? Get<T>(string id) where T : Def;
+	public T Get<T>(string id) where T : Def;
 	
 	public IEnumerable<T> GetByPackage<T>(string packageId) where T : Def;
 	

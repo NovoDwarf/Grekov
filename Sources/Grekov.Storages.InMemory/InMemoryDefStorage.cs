@@ -1,7 +1,7 @@
 using Grekov.Abstractions;
 using Grekov.Abstractions.Interfaces.Definitions;
 
-namespace Grekov.Storage.InMemory;
+namespace Grekov.Storages.InMemory;
 
 public sealed class InMemoryDefStorage : IDefStorage
 {
@@ -88,12 +88,15 @@ public sealed class InMemoryDefStorage : IDefStorage
 		return Task.CompletedTask;
 	}
 
-	public T? Get<T>(DefId id) where T : Def
+	public T Get<T>(DefId id) where T : Def
 	{
-		return GetBucketOrEmpty(typeof(T)).TryGetValue(id, out var definition) ? definition as T : null;
+		if (GetBucket(typeof(T)).TryGetValue(id, out var definition))
+			return (T)definition;
+
+		throw new NullReferenceException();
 	}
 
-	public T? Get<T>(string id) where T : Def
+	public T Get<T>(string id) where T : Def
 	{
 		return Get<T>(DefId.Parse(id));
 	}

@@ -1,6 +1,6 @@
 using Grekov.Builders;
 
-namespace Grekov.Storage.InMemory;
+namespace Grekov.Storages.InMemory;
 
 public static class GrekovStorageBuilderExtensions
 {

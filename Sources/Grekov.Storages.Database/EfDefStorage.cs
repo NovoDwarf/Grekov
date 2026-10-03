@@ -59,12 +59,12 @@ internal sealed class EfDefStorage : IDefStorage
 		await context.SaveChangesAsync(cancellationToken);
 	}
 
-	public T? Get<T>(DefId id) where T : Def
+	public T Get<T>(DefId id) where T : Def
 	{
-		return WithContext(context => context.Set<T>().SingleOrDefault(definition => definition.Id == id));
+		return WithContext(context => context.Set<T>().Single(definition => definition.Id == id));
 	}
 
-	public T? Get<T>(string id) where T : Def
+	public T Get<T>(string id) where T : Def
 	{
 		return Get<T>(DefId.Parse(id));
 	}
