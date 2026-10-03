@@ -1,6 +1,6 @@
 using System.Collections;
-using Grekov.Core;
-using Grekov.Definitions.Interfaces;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Definitions;
 
 namespace Grekov.Definitions.Conversions.Converters;
 
@@ -11,7 +11,7 @@ internal sealed class DictionaryValueConverter : IDefValueConverter
 		return targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>);
 	}
 
-	public object Convert(DefValue value, Type targetType, DefValueConverter converter)
+	public object Convert(DefValue value, Type targetType, IDefConverter converter)
 	{
 		var entries = value.Object ?? throw new InvalidOperationException($"Expected object value for dictionary [{targetType}].");
 

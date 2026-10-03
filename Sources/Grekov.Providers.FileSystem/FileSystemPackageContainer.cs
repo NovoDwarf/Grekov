@@ -1,5 +1,5 @@
-using Grekov.Packaging.Enums;
-using Grekov.Packaging.Interfaces;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Packaging;
 using NovoDwarf.FS.Directories.Interfaces;
 using NovoDwarf.FS.Files.Interfaces;
 using NovoDwarf.FS.Paths.Interfaces;

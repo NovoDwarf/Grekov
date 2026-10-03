@@ -13,4 +13,12 @@
         <PackageReference Include="NovoDwarf.FS" Version="1.0.1" />
     </ItemGroup>
     
+    <ItemGroup>
+      <ProjectReference Include="..\Grekov.Abstractions\Grekov.Abstractions.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Folder Include="Interfaces\" />
+    </ItemGroup>
+    
 </Project>

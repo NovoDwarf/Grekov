@@ -1,8 +1,8 @@
 using System.Reflection;
-using Grekov.Core;
-using Grekov.Core.Attributes;
-using Grekov.Core.Enums;
-using Grekov.Definitions.Interfaces;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Attributes;
+using Grekov.Abstractions.Enums;
+using Grekov.Abstractions.Interfaces.Definitions;
 
 namespace Grekov.Definitions.Conversions.Converters;
 
@@ -13,7 +13,7 @@ internal sealed class ObjectValueConverter : IDefValueConverter
 		return value.Kind == DefValueKind.Object;
 	}
 
-	public object Convert(DefValue value, Type targetType, DefValueConverter converter)
+	public object Convert(DefValue value, Type targetType, IDefConverter converter)
 	{
 		var entries = value.Object ?? throw new InvalidOperationException("Expected object value.");
 		var instance = Activator.CreateInstance(targetType) ?? throw new InvalidOperationException($"Cannot create instance of [{targetType}].");

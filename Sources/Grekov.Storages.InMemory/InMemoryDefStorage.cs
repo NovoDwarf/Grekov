@@ -1,5 +1,5 @@
-using Grekov.Core;
-using Grekov.Definitions.Interfaces;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Definitions;
 
 namespace Grekov.Storage.InMemory;
 

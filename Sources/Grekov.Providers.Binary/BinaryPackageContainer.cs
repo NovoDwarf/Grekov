@@ -1,6 +1,6 @@
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Packaging;
 using Grekov.Binary;
-using Grekov.Packaging.Enums;
-using Grekov.Packaging.Interfaces;
 
 namespace Grekov.Providers.Binary;
 

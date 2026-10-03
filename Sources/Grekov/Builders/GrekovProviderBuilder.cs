@@ -1,4 +1,4 @@
-using Grekov.Packaging.Interfaces;
+using Grekov.Abstractions.Interfaces.Packaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 

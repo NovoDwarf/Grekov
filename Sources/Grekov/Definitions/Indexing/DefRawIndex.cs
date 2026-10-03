@@ -1,5 +1,4 @@
-using Grekov.Core;
-using Grekov.Definitions.Models;
+using Grekov.Abstractions;
 
 namespace Grekov.Definitions.Indexing;
 

@@ -1,4 +1,4 @@
-using Grekov.Definitions.Interfaces;
+using Grekov.Abstractions.Interfaces.Definitions;
 using NovoDwarf.FS.Paths.Interfaces;
 
 namespace Grekov.Definitions.Registry;

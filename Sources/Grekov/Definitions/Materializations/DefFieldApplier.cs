@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
 using System.Reflection;
-using Grekov.Core;
-using Grekov.Core.Attributes;
-using Grekov.Definitions.Conversions;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Attributes;
+using Grekov.Abstractions.Interfaces.Definitions;
 
 namespace Grekov.Definitions.Materializations;
 
@@ -10,9 +10,9 @@ internal sealed class DefFieldApplier
 {
     private static readonly ConcurrentDictionary<Type, IReadOnlyDictionary<string, DefFieldMetadata>> PropertyCache = [];
 
-    private readonly DefValueConverter _converter;
+    private readonly IDefConverter _converter;
 
-    public DefFieldApplier(DefValueConverter converter)
+    public DefFieldApplier(IDefConverter converter)
     {
         _converter = converter;
     }

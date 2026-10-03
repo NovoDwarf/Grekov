@@ -1,8 +1,8 @@
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using Grekov.Core;
-using Grekov.Core.Attributes;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Attributes;
 using Grekov.Definitions.Registry;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;

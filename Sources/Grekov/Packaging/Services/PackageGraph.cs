@@ -1,4 +1,4 @@
-using Grekov.Packaging.Entities;
+using Grekov.Abstractions;
 
 namespace Grekov.Packaging.Services;
 

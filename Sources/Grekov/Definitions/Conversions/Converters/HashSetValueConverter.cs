@@ -1,7 +1,7 @@
 using System.Collections;
-using Grekov.Core;
-using Grekov.Core.Enums;
-using Grekov.Definitions.Interfaces;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Enums;
+using Grekov.Abstractions.Interfaces.Definitions;
 
 namespace Grekov.Definitions.Conversions.Converters;
 
@@ -13,7 +13,7 @@ internal sealed class HashSetValueConverter : IDefValueConverter
 		       targetType.GetGenericTypeDefinition() == typeof(HashSet<>);
 	}
 
-	public object Convert(DefValue value, Type targetType, DefValueConverter converter)
+	public object Convert(DefValue value, Type targetType, IDefConverter converter)
 	{
 		var values = GetValues(value, targetType);
 		var elementType = targetType.GetGenericArguments()[0];

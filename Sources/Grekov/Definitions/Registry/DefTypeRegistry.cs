@@ -1,6 +1,6 @@
 using System.Reflection;
-using Grekov.Core;
-using Grekov.Core.Attributes;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Attributes;
 
 namespace Grekov.Definitions.Registry;
 

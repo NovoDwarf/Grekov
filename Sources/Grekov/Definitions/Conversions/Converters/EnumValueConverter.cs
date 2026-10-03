@@ -1,5 +1,5 @@
-using Grekov.Core;
-using Grekov.Definitions.Interfaces;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Definitions;
 
 namespace Grekov.Definitions.Conversions.Converters;
 
@@ -12,7 +12,7 @@ internal sealed class EnumValueConverter : IDefValueConverter
 		return DefValueConversion.IsScalar(value) && actualType.IsEnum;
 	}
 
-	public object? Convert(DefValue value, Type targetType, DefValueConverter converter)
+	public object? Convert(DefValue value, Type targetType, IDefConverter converter)
 	{
 		var enumType = DefValueConversion.UnwrapNullable(targetType);
 		var scalar = value.Scalar!;

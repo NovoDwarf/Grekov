@@ -1,4 +1,4 @@
-using Grekov.Definitions.Models;
+using Grekov.Abstractions;
 
 namespace Grekov.Definitions.Registry;
 

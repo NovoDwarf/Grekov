@@ -1,5 +1,5 @@
-using Grekov.Core;
-using Grekov.Core.Enums;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Enums;
 
 namespace Grekov.Definitions.Inheritance;
 

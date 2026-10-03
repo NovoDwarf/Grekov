@@ -1,5 +1,8 @@
+using Grekov.Abstractions.Interfaces;
+using Grekov.Abstractions.Interfaces.Definitions;
+using Grekov.Abstractions.Interfaces.Localizations;
+using Grekov.Abstractions.Interfaces.Packaging;
 using Microsoft.Extensions.DependencyInjection;
-using Grekov.Assemblies.Interfaces;
 using Grekov.Assemblies.Services;
 using Grekov.Builders;
 using Grekov.Defaults;
@@ -7,17 +10,13 @@ using Grekov.Definitions;
 using Grekov.Definitions.Conversions;
 using Grekov.Definitions.Indexing;
 using Grekov.Definitions.Inheritance;
-using Grekov.Definitions.Interfaces;
 using Grekov.Definitions.Materializations;
 using Grekov.Definitions.Registry;
 using Grekov.Definitions.Scanning;
-using Grekov.Localizations.Interfaces;
 using Grekov.Localizations.Services;
 using Grekov.Packaging;
-using Grekov.Packaging.Interfaces;
 using Grekov.Packaging.Services;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.VisualBasic;
 using NovoDwarf.FS.Extensions;
 
 namespace Grekov.Extensions;
@@ -89,7 +88,7 @@ public static class ServiceCollectionExtensions
             services.TryAddSingleton<DefInheritanceResolver>();
             services.TryAddSingleton<DefMaterializer>();
             services.TryAddSingleton<DefValueConverterRegistry>();
-            services.TryAddSingleton<DefValueConverter>();
+            services.TryAddSingleton<IDefConverter, DefValueConverter>();
             services.TryAddSingleton<DefValueMerger>();
             services.TryAddSingleton<DefTypeRegistry>();
             services.TryAddSingleton<DefConflictRegistry>();

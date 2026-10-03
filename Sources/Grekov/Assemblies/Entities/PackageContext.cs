@@ -1,6 +1,6 @@
 using System.Reflection;
-using Grekov.Core.Interfaces;
-using Grekov.Packaging.Interfaces;
+using Grekov.Abstractions.Interfaces.Assemblies;
+using Grekov.Abstractions.Interfaces.Packaging;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grekov.Assemblies.Entities;

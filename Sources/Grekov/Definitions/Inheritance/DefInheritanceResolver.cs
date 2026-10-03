@@ -1,6 +1,5 @@
-using Grekov.Core;
+using Grekov.Abstractions;
 using Grekov.Definitions.Indexing;
-using Grekov.Definitions.Models;
 
 namespace Grekov.Definitions.Inheritance;
 

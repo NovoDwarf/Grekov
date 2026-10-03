@@ -1,6 +1,6 @@
 using System.Collections;
-using Grekov.Core;
-using Grekov.Definitions.Interfaces;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Definitions;
 
 namespace Grekov.Definitions.Conversions.Converters;
 
@@ -12,7 +12,7 @@ internal sealed class ListValueConverter : IDefValueConverter
 		       targetType.GetGenericTypeDefinition() == typeof(List<>);
 	}
 
-	public object Convert(DefValue value, Type targetType, DefValueConverter converter)
+	public object Convert(DefValue value, Type targetType, IDefConverter converter)
 	{
 		var values = DefValueConversion.GetListValues(value, targetType);
 		var itemType = targetType.GetGenericArguments()[0];

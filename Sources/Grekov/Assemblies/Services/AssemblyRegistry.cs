@@ -1,7 +1,5 @@
 using System.Reflection;
 using System.Runtime.Loader;
-using Grekov.Assemblies.Entities;
-using Grekov.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace Grekov.Assemblies.Services;

@@ -1,8 +1,6 @@
-using Grekov.Definitions.Interfaces;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Definitions;
 using Grekov.Localizations.Entities;
-using Grekov.Packaging;
-using Grekov.Packaging.Entities;
-using Grekov.Packaging.Interfaces;
 
 namespace Grekov.Localizations.Services;
 

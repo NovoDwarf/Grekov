@@ -1,4 +1,4 @@
-using Grekov.Definitions.Interfaces;
+using Grekov.Abstractions.Interfaces.Definitions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grekov.Builders;

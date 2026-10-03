@@ -1,5 +1,6 @@
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Packaging;
 using Grekov.Packaging.Entities;
-using Grekov.Packaging.Interfaces;
 using Grekov.Packaging.Services;
 
 namespace Grekov.Packaging;

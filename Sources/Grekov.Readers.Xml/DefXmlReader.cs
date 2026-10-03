@@ -1,12 +1,10 @@
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
-using Grekov.Core;
-using Grekov.Core.Enums;
-using Grekov.Definitions.Interfaces;
-using Grekov.Definitions.Models;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Enums;
+using Grekov.Abstractions.Interfaces.Definitions;
 using Grekov.Definitions.Registry;
-using Grekov.Packaging.Entities;
 using Microsoft.Extensions.Logging;
 using NovoDwarf.FS.Files.Interfaces;
 using NovoDwarf.FS.Paths.Interfaces;

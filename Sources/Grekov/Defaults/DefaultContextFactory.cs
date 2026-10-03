@@ -1,8 +1,8 @@
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Assemblies;
+using Grekov.Abstractions.Interfaces.Packaging;
 using Grekov.Assemblies.Entities;
-using Grekov.Assemblies.Interfaces;
 using Grekov.Assemblies.Services;
-using Grekov.Core.Interfaces;
-using Grekov.Packaging.Entities;
 
 namespace Grekov.Defaults;
 

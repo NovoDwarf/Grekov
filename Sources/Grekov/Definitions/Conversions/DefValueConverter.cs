@@ -1,13 +1,10 @@
-using System.Collections;
-using System.Reflection;
-using Grekov.Core;
-using Grekov.Core.Attributes;
-using Grekov.Core.Enums;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Definitions;
 using Grekov.Definitions.Registry;
 
 namespace Grekov.Definitions.Conversions;
 
-public sealed class DefValueConverter
+public sealed class DefValueConverter : IDefConverter
 {
     private readonly DefValueConverterRegistry _registry;
 
@@ -24,7 +21,6 @@ public sealed class DefValueConverter
                 return converter.Convert(value, targetType, this);
         }
 
-        throw new NotSupportedException(
-            $"Cannot convert [{value.Kind}] to [{targetType}].");
+        throw new NotSupportedException($"Cannot convert [{value.Kind}] to [{targetType}].");
     }
 }

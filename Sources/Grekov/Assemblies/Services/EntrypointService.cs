@@ -1,8 +1,7 @@
 using System.Reflection;
-using Grekov.Assemblies.Entities;
-using Grekov.Assemblies.Interfaces;
-using Grekov.Core.Interfaces;
-using Grekov.Packaging.Entities;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Assemblies;
+using Grekov.Abstractions.Interfaces.Packaging;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grekov.Assemblies.Services;

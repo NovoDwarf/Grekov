@@ -1,9 +1,7 @@
 using System.Text.Json;
-using Grekov.Core;
-using Grekov.Definitions.Interfaces;
-using Grekov.Definitions.Models;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Definitions;
 using Grekov.Definitions.Registry;
-using Grekov.Packaging.Entities;
 using NovoDwarf.FS.Files.Interfaces;
 using NovoDwarf.FS.Paths.Interfaces;
 

@@ -1,7 +1,5 @@
-using Grekov.Definitions.Interfaces;
-using Grekov.Definitions.Registry;
-using Grekov.Packaging.Entities;
-using Grekov.Packaging.Enums;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Definitions;
 
 namespace Grekov.Definitions.Scanning;
 
