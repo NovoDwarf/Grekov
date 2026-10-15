@@ -2,7 +2,7 @@ using Grekov.Builders;
 
 namespace Grekov.Readers.Yaml.Extensions;
 
-public static class GrekovExtensions
+public static class GrekovReaderBuilderExtensions
 {
 	public static GrekovReaderBuilder Yaml(this GrekovReaderBuilder builder)
 	{

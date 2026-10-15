@@ -1,8 +1,9 @@
 using Grekov.Builders;
+using Grekov.Readers.Xml;
 
-namespace Grekov.Readers.Xml.Extensions;
+namespace Grekov.Extensions;
 
-public static class GrekovExtensions
+public static class GrekovReaderBuilderExtensions
 {
 	public static GrekovReaderBuilder Xml(this GrekovReaderBuilder builder)
 	{

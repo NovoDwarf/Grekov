@@ -1,8 +1,9 @@
 using Grekov.Builders;
+using Grekov.Readers.Toml;
 
-namespace Grekov.Readers.Toml.Extensions;
+namespace Grekov.Extensions;
 
-public static class GrekovExtensions
+public static class GrekovReaderBuilderExtensions
 {
 	public static GrekovReaderBuilder Toml(this GrekovReaderBuilder builder)
 	{

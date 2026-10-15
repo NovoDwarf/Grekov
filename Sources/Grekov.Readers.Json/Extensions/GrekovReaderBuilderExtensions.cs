@@ -1,8 +1,9 @@
 using Grekov.Builders;
+using Grekov.Readers.Json;
 
-namespace Grekov.Readers.Json.Extensions;
+namespace Grekov.Extensions;
 
-public static class GrekovExtensions
+public static class GrekovReaderBuilderExtensions
 {
 	public static GrekovReaderBuilder Json(this GrekovReaderBuilder builder)
 	{

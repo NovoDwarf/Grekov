@@ -1,9 +1,10 @@
 using Grekov.Builders;
+using Grekov.Storages.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Grekov.Storages.Database;
+namespace Grekov.Extensions;
 
 public static class GrekovStorageBuilderExtensions
 {
