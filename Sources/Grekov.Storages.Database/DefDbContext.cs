@@ -13,8 +13,7 @@ internal sealed class DefDbContext : DbContext
 {
 	private readonly DefTypeRegistry _types;
 
-	public DefDbContext(DbContextOptions<DefDbContext> options, DefTypeRegistry types)
-		: base(options)
+	public DefDbContext(DbContextOptions<DefDbContext> options, DefTypeRegistry types) : base(options)
 	{
 		_types = types;
 	}
@@ -53,11 +52,7 @@ internal sealed class DefDbContext : DbContext
 				continue;
 
 			if (!IsSupportedScalar(property.PropertyType))
-			{
-				throw new InvalidOperationException(
-					$"Definition field [{type.FullName}.{property.Name}] has unsupported database type [{property.PropertyType.FullName}]. " +
-				                                    "The initial database container supports scalar fields only.");
-			}
+				throw new InvalidOperationException($"Definition field [{type.FullName}.{property.Name}] has unsupported database type [{property.PropertyType.FullName}]. The initial database container supports scalar fields only.");
 
 			yield return property;
 		}
