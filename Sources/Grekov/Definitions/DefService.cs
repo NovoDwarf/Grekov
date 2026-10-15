@@ -5,6 +5,7 @@ using Grekov.Definitions.Indexing;
 using Grekov.Definitions.Materializations;
 using Grekov.Definitions.Registry;
 using Grekov.Definitions.Scanning;
+using Grekov.Definitions.Validation;
 using NovoDwarf.FS.Paths.Interfaces;
 
 namespace Grekov.Definitions;
@@ -49,13 +50,35 @@ internal sealed class DefService
         }
 
         var definitions = new List<Def>();
+        var validationIssues = new List<DefIssue>();
 
         foreach (var raw in _rawIndex.All)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var resolved = _inheritance.Resolve(raw);
             var definition = _materializer.Materialize(resolved);
 
+            DefValidator.Validate(definition, validationIssues);
             definitions.Add(definition);
+        }
+
+        if (validationIssues.Count > 0)
+        {
+            foreach (var issue in validationIssues)
+            {
+                _issueRegistry.Add(issue);
+
+                foreach (var package in packages)
+                {
+                    if (string.Equals(package.Id, issue.PackageId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        package.AddIssue(PackageIssue.DefinitionIssue(issue));
+                        break;
+                    }
+                }
+            }
+
+            throw new DefValidationException(validationIssues);
         }
         
         await _storage.AddRangeAsync(definitions, cancellationToken);
