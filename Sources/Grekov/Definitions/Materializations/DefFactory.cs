@@ -6,9 +6,6 @@ internal sealed class DefFactory
 {
 	public Def Create(Type type, DefRaw raw)
 	{
-		ArgumentNullException.ThrowIfNull(type);
-		ArgumentNullException.ThrowIfNull(raw);
-
 		if (!typeof(Def).IsAssignableFrom(type))
 			throw new ArgumentException($"Type [{type.FullName}] must inherit from {nameof(Def)}.", nameof(type));
 

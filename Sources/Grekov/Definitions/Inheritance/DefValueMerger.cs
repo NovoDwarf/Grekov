@@ -7,9 +7,6 @@ internal sealed class DefValueMerger
 {
 	public IReadOnlyDictionary<string, DefValue> Merge(IReadOnlyDictionary<string, DefValue> parent, IReadOnlyDictionary<string, DefValue> child)
 	{
-		ArgumentNullException.ThrowIfNull(parent);
-		ArgumentNullException.ThrowIfNull(child);
-
 		var result = new Dictionary<string, DefValue>(parent, StringComparer.OrdinalIgnoreCase);
 
 		foreach (var (name, childValue) in child)

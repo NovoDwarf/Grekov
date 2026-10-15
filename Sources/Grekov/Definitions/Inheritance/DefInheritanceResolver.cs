@@ -18,8 +18,6 @@ internal sealed class DefInheritanceResolver
 
 	public DefRaw Resolve(DefRaw raw)
 	{
-		ArgumentNullException.ThrowIfNull(raw);
-
 		if (_cache.TryGetValue(raw.Id, out var cached))
 			return cached;
 
@@ -39,7 +37,6 @@ internal sealed class DefInheritanceResolver
 		if (!resolving.Add(raw.Id))
 		{
 			var chain = string.Join(" -> ", resolving.Append(raw.Id));
-
 			throw new InvalidOperationException($"Circular definition inheritance detected: {chain}.");
 		}
 

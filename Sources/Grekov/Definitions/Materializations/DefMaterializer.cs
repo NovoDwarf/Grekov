@@ -15,8 +15,6 @@ internal sealed class DefMaterializer
 
 	public Def Materialize(DefRaw raw)
 	{
-		ArgumentNullException.ThrowIfNull(raw);
-
 		var definition = _factory.Create(raw.Type, raw);
 
 		_fields.Apply(definition, raw.Fields);
