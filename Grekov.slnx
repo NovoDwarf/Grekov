@@ -14,6 +14,7 @@
     <Project Path="Sources/Grekov.Providers.FileSystem/Grekov.Providers.FileSystem.csproj" />
   </Folder>
   <Folder Name="/Sources/Readers/">
+    <Project Path="Sources/Grekov.Readers.Abstractions/Grekov.Readers.Abstractions.csproj" />
     <Project Path="Sources/Grekov.Readers.Json/Grekov.Readers.Json.csproj" />
     <Project Path="Sources/Grekov.Readers.Toml/Grekov.Readers.Toml.csproj" />
     <Project Path="Sources/Grekov.Readers.Xml/Grekov.Readers.Xml.csproj" />
@@ -23,5 +24,8 @@
     <Project Path="Sources/Grekov.Storages.Database/Grekov.Storages.Database.csproj" />
     <Project Path="Sources/Grekov.Storages.InMemory/Grekov.Storages.InMemory.csproj" />
   </Folder>
-  <Folder Name="/Tests/" />
+  <Folder Name="/Tests/">
+    <Project Path="Tests/Grekov.Tests/Grekov.Tests.csproj" />
+    <Project Path="Tests/Grekov.Readers.Tests/Grekov.Readers.Tests.csproj" />
+  </Folder>
 </Solution>
