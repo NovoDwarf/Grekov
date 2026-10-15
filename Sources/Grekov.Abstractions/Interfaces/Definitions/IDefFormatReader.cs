@@ -4,11 +4,11 @@ public interface IDefFormatReader
 {
 	public IReadOnlySet<string> Extensions { get; }
 
-	PackageManifest ReadManifest(string manifestPath);
+	public PackageManifest ReadManifest(string manifestPath);
 
-	PackageManifest ReadManifest(Stream stream);
+	public PackageManifest ReadManifest(Stream stream);
 
-	IReadOnlyList<DefRaw> ReadDefinitions(DefReadContext context);
+	public IReadOnlyList<DefRaw> ReadDefinitions(DefReadContext context);
 
-	IReadOnlyList<DefRaw> ReadDefinitions(Stream stream, DefReadContext context);
+	public IReadOnlyList<DefRaw> ReadDefinitions(Stream stream, DefReadContext context);
 }
