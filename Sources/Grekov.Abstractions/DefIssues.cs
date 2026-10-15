@@ -38,9 +38,35 @@ public static class DefIssues
         return Error("definition.structural.multiple", $"Definition contains multiple [{name}] elements.", packageId, resourcePath, line, column);
     }
 
-    public static DefIssue XmlEmpty(string packageId, string resourcePath)
+    public static DefIssue FileEmpty(string packageId, string resourcePath)
     {
-        return Error("definition.xml.empty", "XML definition file is empty.", packageId, resourcePath);
+        return Error("definition.file.empty", "Definition file is empty.", packageId, resourcePath);
+    }
+
+    public static DefIssue FileInvalid(string packageId, string resourcePath, Exception? exception = null)
+    {
+        return Error("definition.file.invalid", "Definition file contains invalid data.", packageId, resourcePath, exception: exception);
+    }
+
+    public static DefIssue InvalidType(string packageId, string resourcePath, string value, string expectedType, int? line = null, int? column = null, Exception? exception = null)
+    {
+        return Error("definition.type.invalid", $"Value [{value}] cannot be converted to type [{expectedType}].", packageId, resourcePath, line, column, exception);
+    }
+    
+    public static DefIssue MissingProperty(string packageId, string resourcePath, string propertyName, int? line = null, int? column = null)
+    {
+        return Error("definition.property.missing", $"Definition does not contain required [{propertyName}].", packageId, resourcePath, line, column);
+    }
+
+    public static DefIssue InvalidPropertyType(string packageId, string resourcePath, string propertyName, string value, string expectedType, int? line = null, int? column = null, Exception? exception = null)
+    {
+        return Error("definition.property.type.invalid", $"Property [{propertyName}] with value [{value}] must be of type [{expectedType}].", packageId, resourcePath, line, column, exception);
+    }
+    
+    public static DefIssue ValidationFailed(string packageId, string resourcePath, DefId definitionId, string memberPath, string message)
+    {
+        var location = string.IsNullOrEmpty(memberPath) ? "$" : memberPath;
+        return Error("definition.validation.failed", $"Definition [{definitionId}], field [{location}]: {message}", packageId, resourcePath);
     }
 
     private static DefIssue Error(string code, string message, string packageId, string resourcePath, int? line = null, int? column = null, Exception? exception = null)
