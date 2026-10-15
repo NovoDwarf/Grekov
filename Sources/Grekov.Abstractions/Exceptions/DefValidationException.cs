@@ -1,4 +1,4 @@
-namespace Grekov.Abstractions;
+namespace Grekov.Abstractions.Exceptions;
 
 /// <summary>Reports definition validation failures detected before definitions are stored.</summary>
 public sealed class DefValidationException : InvalidOperationException

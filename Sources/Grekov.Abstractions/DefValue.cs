@@ -20,7 +20,10 @@ public sealed class DefValue
 		List = list;
 	}
 
-	public static DefValue Null() => new(DefValueKind.Null);
+	public static DefValue Null()
+	{
+		return new DefValue(DefValueKind.Null);
+	}
 
 	public static DefValue ScalarValue(object value)
 	{
