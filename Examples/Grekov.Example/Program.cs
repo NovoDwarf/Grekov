@@ -4,9 +4,6 @@ using Grekov.Abstractions.Interfaces;
 using Grekov.Abstractions.Interfaces.Definitions;
 using Grekov.Abstractions.Interfaces.Packaging;
 using Grekov.Extensions;
-using Grekov.Providers.FileSystem;
-using Grekov.Readers.Xml.Extensions;
-using Grekov.Storages.InMemory;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grekov.Example;
