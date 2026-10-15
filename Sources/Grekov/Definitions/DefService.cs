@@ -1,4 +1,5 @@
 using Grekov.Abstractions;
+using Grekov.Abstractions.Exceptions;
 using Grekov.Abstractions.Interfaces.Definitions;
 using Grekov.Definitions.Inheritance;
 using Grekov.Definitions.Indexing;
@@ -19,7 +20,8 @@ internal sealed class DefService
 	private readonly DefInheritanceResolver _inheritance;
 	private readonly DefIssueRegistry _issueRegistry;
 	private readonly DefConflictRegistry _conflictRegistry;
-
+	private readonly DefAttributeValidatorRegistry _validators;
+	private readonly IServiceProvider _services;
 	private readonly IPathParser _pathParser;
 
 	public DefService(DefRawIndex rawIndex, 
@@ -28,7 +30,10 @@ internal sealed class DefService
 		IDefStorage storage,
 		DefMaterializer materializer, 
 		DefInheritanceResolver inheritance, 
-		DefConflictRegistry conflictRegistry, DefIssueRegistry issueRegistry)
+		DefConflictRegistry conflictRegistry, 
+		DefIssueRegistry issueRegistry,
+		DefAttributeValidatorRegistry validators,
+		IServiceProvider services)
 	{
 		_rawIndex = rawIndex;
 		_scanner = scanner;
@@ -39,6 +44,8 @@ internal sealed class DefService
 		_inheritance = inheritance;
 		_conflictRegistry = conflictRegistry;
 		_issueRegistry = issueRegistry;
+		_validators = validators;
+		_services = services;
 	}
 
 	public async Task LoadAsync(IReadOnlyList<PackageInstance> packages, CancellationToken cancellationToken = default)
@@ -50,17 +57,18 @@ internal sealed class DefService
         }
 
         var definitions = new List<Def>();
-        var validationIssues = new List<DefIssue>();
 
         foreach (var raw in _rawIndex.All)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            
             var resolved = _inheritance.Resolve(raw);
             var definition = _materializer.Materialize(resolved);
 
-            DefValidator.Validate(definition, validationIssues);
             definitions.Add(definition);
         }
+
+        var validationIssues = await DefValidator.ValidateAsync(definitions, _storage, _validators, _services, cancellationToken);
 
         if (validationIssues.Count > 0)
         {
@@ -70,11 +78,11 @@ internal sealed class DefService
 
                 foreach (var package in packages)
                 {
-                    if (string.Equals(package.Id, issue.PackageId, StringComparison.OrdinalIgnoreCase))
-                    {
-                        package.AddIssue(PackageIssue.DefinitionIssue(issue));
-                        break;
-                    }
+	                if (!string.Equals(package.Id, issue.PackageId, StringComparison.OrdinalIgnoreCase))
+		                continue;
+	                
+	                package.AddIssue(PackageIssue.DefinitionIssue(issue));
+	                break;
                 }
             }
 
@@ -90,6 +98,7 @@ internal sealed class DefService
         foreach (var package in packages.Reverse())
         {
 			await _storage.RemovePackageAsync(package.Id, cancellationToken);
+			
 			_rawIndex.UnloadPackage(package.Id);
             _issueRegistry.UnloadPackage(package.Id);
             _conflictRegistry.UnloadPackage(package.Id);
@@ -101,10 +110,11 @@ internal sealed class DefService
 		foreach (var (path, reader) in _scanner.Scan(package))
 		{
 			cancellationToken.ThrowIfCancellationRequested();
+			
 			var fallbackId = _pathParser.GetFileNameWithoutExtension(path);
 			var context = new DefReadContext(package.Id, path, fallbackId, []);
 
-			using var stream = package.Container.OpenRead(PackageContentType.Definition, path);
+			await using var stream = package.Container.OpenRead(PackageContentType.Definition, path);
 			var definitions = reader.ReadDefinitions(stream, context);
 
             foreach (var definition in definitions)

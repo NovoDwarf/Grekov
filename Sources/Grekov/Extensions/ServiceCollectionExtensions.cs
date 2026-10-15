@@ -88,6 +88,7 @@ public static class ServiceCollectionExtensions
             services.TryAddSingleton<DefInheritanceResolver>();
             services.TryAddSingleton<DefMaterializer>();
             services.TryAddSingleton<DefValueConverterRegistry>();
+            services.TryAddSingleton<DefAttributeValidatorRegistry>();
             services.TryAddSingleton<IDefConverter, DefValueConverter>();
             services.TryAddSingleton<DefValueMerger>();
             services.TryAddSingleton<DefTypeRegistry>();
@@ -107,3 +108,4 @@ public static class ServiceCollectionExtensions
         }
     }
 }
+

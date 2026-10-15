@@ -18,6 +18,7 @@ internal sealed class GrekovService : IGrekovService
 	private readonly DefService _defs;
 	private readonly IDefStorage _storage;
 	private readonly DefTypeRegistry _defTypes;
+	private readonly DefAttributeValidatorRegistry _validators;
 	private readonly LocalizationService _localization;
 
 	public GrekovService(
@@ -27,7 +28,9 @@ internal sealed class GrekovService : IGrekovService
 		DefService defs,
 		IDefStorage storage,
 		DefTypeRegistry defTypes,
-		LocalizationService localization, EntrypointService entrypoints)
+		LocalizationService localization, 
+		EntrypointService entrypoints,
+		DefAttributeValidatorRegistry validators)
 	{
 		_packages = packages;
 		_assemblies = assemblies;
@@ -37,6 +40,7 @@ internal sealed class GrekovService : IGrekovService
 		_defTypes = defTypes;
 		_localization = localization;
 		_entrypoints = entrypoints;
+		_validators = validators;
 	}
 
 	public async Task StartAsync(CancellationToken token = default)
@@ -44,31 +48,33 @@ internal sealed class GrekovService : IGrekovService
 		await _packages.LoadAsync(token);
 
 		var packages = GetActivePackages();
-		
+
 		await _assemblies.LoadAsync(packages, token);
-		
+
 		_defTypes.Refresh(_assemblyRegistry.GetAllAssemblies());
-		
+		_validators.Refresh(_assemblyRegistry.GetAllAssemblies());
+
 		await _storage.LoadAsync(_defTypes.Types, token);
 		await _entrypoints.LoadAsync(packages);
 		await _defs.LoadAsync(packages, token);
 		await _localization.LoadAsync(packages);
-		
+
 		await _entrypoints.NotifyLoadedAsync(packages);
 	}
 
 	public async Task StopAsync(CancellationToken token = default)
 	{
 		var packages = GetActivePackages();
-		
+
 		await _localization.UnloadAsync(packages);
 		await _defs.UnloadAsync(packages, token);
 		await _entrypoints.UnloadAsync(packages);
+		_validators.Refresh([]);
 		await _assemblies.UnloadAsync(packages, token);
 		await _packages.UnloadAsync(token);
 		await _storage.UnloadAsync(token);
 	}
-	
-	private IReadOnlyList<PackageInstance> GetActivePackages() 
+
+	private IReadOnlyList<PackageInstance> GetActivePackages()
 		=> [.. _packages.LoadOrder.Where(static package => package is { Enabled: true, HasErrors: false })];
 }
