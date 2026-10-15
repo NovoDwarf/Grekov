@@ -1,8 +1,9 @@
 using Grekov.Builders;
 using Grekov.Extensions;
+using Grekov.Providers.Binary;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Grekov.Providers.Binary;
+namespace Grekov.Extensions;
 
 public static class GrekovProviderBuilderExtensions
 {

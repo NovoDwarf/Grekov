@@ -1,9 +1,10 @@
 using Grekov.Builders;
 using Grekov.Extensions;
+using Grekov.Providers.FileSystem;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Grekov.Providers.FileSystem;
+namespace Grekov.Extensions;
 
 public static class GrekovProviderBuilderExtensions
 {
