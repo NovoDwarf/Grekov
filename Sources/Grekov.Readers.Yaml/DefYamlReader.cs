@@ -1,266 +1,170 @@
+using System.Globalization;
 using Grekov.Abstractions;
-using Grekov.Abstractions.Interfaces.Definitions;
 using Grekov.Definitions.Registry;
+using Grekov.Readers.Abstractions;
 using NovoDwarf.FS.Files.Interfaces;
 using NovoDwarf.FS.Paths.Interfaces;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace Grekov.Readers.Yaml;
 
-internal sealed class DefYamlReader : IDefFormatReader
+internal sealed class DefYamlReader
+	: DefStructuredReader<Dictionary<string, object?>>
 {
-    private static readonly IReadOnlySet<string> SupportedExtensions = new HashSet<string>([".yaml", ".yml"], StringComparer.OrdinalIgnoreCase);
-    private static readonly IReadOnlySet<string> ReservedProperties = new HashSet<string>(["$type", "Id", "Parent"], StringComparer.OrdinalIgnoreCase);
+	private static readonly IReadOnlySet<string> SupportedExtensions =
+		new HashSet<string>(
+			[".yaml", ".yml"],
+			StringComparer.OrdinalIgnoreCase);
 
-    private readonly DefTypeRegistry _typeRegistry;
-    private readonly IFileStreamer _fileStreamer;
-    private readonly IPathParser _pathParser;
+	private readonly IDeserializer _deserializer;
 
-    private readonly IDeserializer _deserializer;
+	public DefYamlReader(
+		DefTypeRegistry typeRegistry,
+		IPathParser pathParser,
+		IFileStreamer fileStreamer,
+		DefIssueRegistry issues,
+		IDeserializer deserializer)
+		: base(typeRegistry, pathParser, fileStreamer, issues)
+	{
+		_deserializer = deserializer;
+	}
 
-    public DefYamlReader(DefTypeRegistry typeRegistry, IPathParser pathParser, IFileStreamer fileStreamer)
-    {
-        _typeRegistry = typeRegistry;
-        _pathParser = pathParser;
-        _fileStreamer = fileStreamer;
+	public override IReadOnlySet<string> Extensions =>
+		SupportedExtensions;
 
-        _deserializer = new DeserializerBuilder().WithNamingConvention(NullNamingConvention.Instance).Build();
-    }
+	public override PackageManifest ReadManifest(string manifestPath)
+	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
 
-    public IReadOnlySet<string> Extensions => SupportedExtensions;
+		using var stream = FileStreamer.OpenRead(manifestPath);
 
-    public PackageManifest ReadManifest(string manifestPath)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
+		return ReadManifest(stream, manifestPath);
+	}
 
-        try
-        {
-            using var stream = _fileStreamer.OpenRead(manifestPath);
-            using var reader = new StreamReader(stream);
+	public override PackageManifest ReadManifest(Stream stream)
+	{
+		return ReadManifest(stream, "<stream>");
+	}
 
-            var manifest = _deserializer.Deserialize<PackageManifest>(reader);
+	private PackageManifest ReadManifest(
+		Stream stream,
+		string source)
+	{
+		try
+		{
+			using var reader = new StreamReader(stream);
 
-            if (manifest is null)
-                throw new InvalidDataException("YAML manifest does not contain a valid package manifest.");
+			var manifest = _deserializer.Deserialize<PackageManifest>(reader)
+			               ?? throw new InvalidDataException(
+				               "YAML manifest does not contain a valid package manifest.");
 
-            if (string.IsNullOrWhiteSpace(manifest.Id))
-                manifest.Id = _pathParser.GetDirectoryName(manifestPath);
+			if (string.IsNullOrWhiteSpace(manifest.Id) &&
+			    !string.Equals(
+				    source,
+				    "<stream>",
+				    StringComparison.Ordinal))
+				manifest.Id = PathParser.GetDirectoryName(source);
 
-            return manifest;
-        }
-        catch (Exception exception) when (exception is YamlException or InvalidDataException)
-        {
-            throw new InvalidDataException($"Invalid YAML package manifest: [{manifestPath}].", exception);
-        }
-    }
+			return manifest;
+		}
+		catch (YamlException exception)
+		{
+			throw new InvalidDataException(
+				$"Invalid YAML package manifest: [{source}].",
+				exception);
+		}
+	}
 
-    public IReadOnlyList<DefRaw> ReadDefinitions(DefReadContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
+	protected override Dictionary<string, object?> Deserialize(Stream stream)
+	{
+		using var reader = new StreamReader(stream);
 
-        using var stream = _fileStreamer.OpenRead(context.ResourcePath);
-        using var reader = new StreamReader(stream);
+		return _deserializer.Deserialize<Dictionary<string, object?>>(reader);
+	}
 
-        try
-        {
-            var document = _deserializer.Deserialize<Dictionary<string, object?>>(reader);
+	protected override bool TryGetValue(
+		Dictionary<string, object?> document,
+		string name,
+		out object? value)
+	{
+		foreach (var pair in document)
+		{
+			if (!pair.Key.Equals(
+				    name,
+				    StringComparison.OrdinalIgnoreCase))
+				continue;
 
-            if (document is null)
-                throw Error(context, "YAML definition file is empty.");
+			value = pair.Value;
+			return true;
+		}
 
-            return [ReadDefinition(document, context)];
-        }
-        catch (YamlException exception)
-        {
-            throw Error(context, $"Invalid YAML definition file: [{context.ResourcePath}].", exception);
-        }
-    }
+		value = null;
+		return false;
+	}
 
-    private DefRaw ReadDefinition(Dictionary<string, object?> document, DefReadContext context)
-    {
-        var typeName = ReadRequiredString(document, "$type", context);
+	protected override IEnumerable<KeyValuePair<string, object?>> GetProperties(
+		Dictionary<string, object?> document)
+	{
+		return document;
+	}
 
-        if (!_typeRegistry.TryResolveByElementName(typeName, out var type))
-            throw Error(context, $"Unknown definition type [{typeName}].");
+	protected override DefValue ReadValue(
+		object? value,
+		DefReadContext context)
+	{
+		return value switch
+		{
+			null => DefValue.Null(),
 
-        var id = ReadRequiredId(document, context);
-        var parentId = ReadOptionalParentId(document, context);
+			Dictionary<string, object?> dictionary =>
+				ReadObject(dictionary, context),
 
-        var fields = ReadFields(document, context);
+			IList<object?> list =>
+				ReadArray(list, context),
 
-        fields.Remove("$type");
-        fields.Remove("Id");
-        fields.Remove("Parent");
+			_ => DefValue.ScalarValue(
+				ConvertScalar(value))
+		};
+	}
 
-        return new DefRaw
-        {
-            Id = id,
-            Type = type,
-            ParentId = parentId,
-            Fields = fields,
-            PackageId = context.PackageId,
-            ResourcePath = context.ResourcePath
-        };
-    }
+	private DefValue ReadObject(
+		Dictionary<string, object?> document,
+		DefReadContext context)
+	{
+		var values = new Dictionary<string, DefValue>(
+			StringComparer.OrdinalIgnoreCase);
 
-    private static DefId ReadRequiredId(Dictionary<string, object?> document, DefReadContext context)
-    {
-        var value = ReadRequiredString(document, "Id", context);
+		foreach (var pair in document) values[pair.Key] = ReadValue(pair.Value, context);
 
-        try
-        {
-            return DefId.Parse(value);
-        }
-        catch (Exception exception)when (exception is ArgumentException or FormatException)
-        {
-            throw Error(context, $"Invalid definition Id [{value}].", exception);
-        }
-    }
+		return DefValue.ObjectValue(values);
+	}
 
-    private static DefId? ReadOptionalParentId(
-        Dictionary<string, object?> document,
-        DefReadContext context)
-    {
-        if (!TryGetValue(document, "Parent", out var rawValue))
-            return null;
+	private DefValue ReadArray(
+		IList<object?> array,
+		DefReadContext context)
+	{
+		var values = new DefValue[array.Count];
 
-        if (rawValue is not string value)
-            throw Error(context, "Definition [Parent] must be a string.");
+		for (var i = 0; i < array.Count; i++) values[i] = ReadValue(array[i], context);
 
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
+		return DefValue.ListValue(values);
+	}
 
-        try
-        {
-            return DefId.Parse(value);
-        }
-        catch (Exception exception)when (exception is ArgumentException or FormatException)
-        {
-            throw Error(context, $"Invalid parent Id [{value}].", exception);
-        }
-    }
+	private static string ConvertScalar(object value)
+	{
+		return value switch
+		{
+			bool boolean =>
+				boolean.ToString(),
 
-    private static Dictionary<string, DefValue> ReadFields(Dictionary<string, object?> document, DefReadContext context)
-    {
-        var fields = new Dictionary<string, DefValue>(StringComparer.OrdinalIgnoreCase);
+			IFormattable formattable =>
+				formattable.ToString(
+					null,
+					CultureInfo.InvariantCulture),
 
-        foreach (var pair in document)
-        {
-            if (ReservedProperties.Contains(pair.Key))
-                continue;
-
-            AddField(fields, pair.Key, ReadValue(pair.Value, context), context);
-        }
-
-        return fields;
-    }
-
-    private static DefValue ReadValue(
-        object? value,
-        DefReadContext context)
-    {
-        if (value is null)
-            return DefValue.Null();
-
-        return value switch
-        {
-            IDictionary<object, object?> map => ReadObject(map, context),
-            IDictionary<string, object?> map => ReadObject(map, context),
-            IEnumerable<object?> sequence => ReadArray(sequence, context),
-            string stringValue => DefValue.ScalarValue(stringValue),
-            bool boolValue => DefValue.ScalarValue(boolValue),
-            byte byteValue => DefValue.ScalarValue(byteValue),
-            sbyte sbyteValue => DefValue.ScalarValue(sbyteValue),
-            short shortValue => DefValue.ScalarValue(shortValue),
-            ushort ushortValue => DefValue.ScalarValue(ushortValue),
-            int intValue => DefValue.ScalarValue(intValue),
-            uint uintValue => DefValue.ScalarValue(uintValue),
-            long longValue => DefValue.ScalarValue(longValue),
-            ulong ulongValue => DefValue.ScalarValue(ulongValue),
-            float floatValue => DefValue.ScalarValue(floatValue),
-            double doubleValue => DefValue.ScalarValue(doubleValue),
-            decimal decimalValue => DefValue.ScalarValue(decimalValue),
-            DateTime dateTime => DefValue.ScalarValue(dateTime),
-            DateTimeOffset dateTimeOffset => DefValue.ScalarValue(dateTimeOffset),
-            DateOnly dateOnly => DefValue.ScalarValue(dateOnly),
-            TimeOnly timeOnly => DefValue.ScalarValue(timeOnly),
-            _ => throw Error(context, $"Unsupported YAML value type [{value.GetType().FullName}].")
-        };
-    }
-
-    private static DefValue ReadObject(IDictionary<object, object?> map, DefReadContext context)
-    {
-        var fields = new Dictionary<string, DefValue>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var pair in map)
-        {
-            if (pair.Key is not string name)
-                throw Error(context, "YAML object property names must be strings.");
-
-            AddField(fields, name, ReadValue(pair.Value, context), context);
-        }
-
-        return DefValue.ObjectValue(fields);
-    }
-
-    private static DefValue ReadObject(IDictionary<string, object?> map, DefReadContext context)
-    {
-        var fields = new Dictionary<string, DefValue>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var pair in map) 
-            AddField(fields, pair.Key, ReadValue(pair.Value, context), context);
-
-        return DefValue.ObjectValue(fields);
-    }
-
-    private static DefValue ReadArray(IEnumerable<object?> sequence, DefReadContext context)
-    {
-        var values = sequence
-            .Select(value => ReadValue(value, context))
-            .ToArray();
-
-        return DefValue.ListValue(values);
-    }
-
-    private static string ReadRequiredString(Dictionary<string, object?> document, string name, DefReadContext context)
-    {
-        if (!TryGetValue(document, name, out var value))
-            throw Error(context, $"Definition does not contain required [{name}].");
-
-        if (value is not string stringValue)
-            throw Error(context, $"Definition [{name}] must be a string.");
-
-        if (string.IsNullOrWhiteSpace(stringValue))
-            throw Error(context, $"Definition [{name}] cannot be empty.");
-
-        return stringValue;
-    }
-
-    private static bool TryGetValue(Dictionary<string, object?> document, string name, out object? value)
-    {
-        foreach (var pair in document)
-        {
-            if (!pair.Key.Equals(name, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            value = pair.Value;
-            return true;
-        }
-
-        value = null;
-        return false;
-    }
-
-    private static void AddField(Dictionary<string, DefValue> fields, string name, DefValue value, DefReadContext context)
-    {
-        if (!fields.TryAdd(name, value))
-            throw Error(context, $"Field [{name}] is declared more than once.");
-    }
-
-    private static InvalidDataException Error(DefReadContext context, string message, Exception? innerException = null)
-    {
-        return new InvalidDataException($"{message} File: [{context.ResourcePath}]", innerException);
-    }
+			_ =>
+				value.ToString() ?? string.Empty
+		};
+	}
 }
