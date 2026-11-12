@@ -24,6 +24,10 @@
     <Project Path="Sources/Grekov.Storages.Database/Grekov.Storages.Database.csproj" />
     <Project Path="Sources/Grekov.Storages.InMemory/Grekov.Storages.InMemory.csproj" />
   </Folder>
+  <Folder Name="/Tests/Fixtures/">
+    <Project Path="Tests/Fixtures/Grekov.TestDependency/Grekov.TestDependency.csproj" />
+    <Project Path="Tests/Fixtures/Grekov.TestPackage/Grekov.TestPackage.csproj" />
+  </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/Grekov.Tests/Grekov.Tests.csproj" />
     <Project Path="Tests/Grekov.Readers.Tests/Grekov.Readers.Tests.csproj" />

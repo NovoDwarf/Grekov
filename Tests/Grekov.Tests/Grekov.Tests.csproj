@@ -6,13 +6,27 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.1.26425.128" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
         <PackageReference Include="xunit" Version="2.9.3" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">
+        <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
     <ItemGroup>
+        <ProjectReference Include="..\..\Sources\Grekov.Binary\Grekov.Binary.csproj" />
         <Using Include="Xunit" />
         <ProjectReference Include="../../Sources/Grekov.Storages.InMemory/Grekov.Storages.InMemory.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="../../Sources/Grekov.Readers.Json/Grekov.Readers.Json.csproj" />
+        <ProjectReference Include="../../Sources/Grekov.Providers.FileSystem/Grekov.Providers.FileSystem.csproj" />
+        <ProjectReference Include="../../Sources/Grekov.Providers.Binary/Grekov.Providers.Binary.csproj" />
+        <ProjectReference Include="../Fixtures/Grekov.TestPackage/Grekov.TestPackage.csproj" ReferenceOutputAssembly="false" />
+        <None Include="../Fixtures/Grekov.TestPackage/bin/$(Configuration)/$(TargetFramework)/Grekov.TestPackage.dll" Link="TestPackage/Grekov.TestPackage.dll" CopyToOutputDirectory="PreserveNewest" />
+        <None Include="../Fixtures/Grekov.TestPackage/bin/$(Configuration)/$(TargetFramework)/Grekov.TestDependency.dll" Link="TestPackage/Grekov.TestDependency.dll" CopyToOutputDirectory="PreserveNewest" />
+        <None Include="../Fixtures/Grekov.TestPackage/bin/$(Configuration)/$(TargetFramework)/Grekov.Abstractions.dll" Link="TestPackage/Grekov.Abstractions.dll" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="../../Sources/Grekov.Storages.Database/Grekov.Storages.Database.csproj" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
     </ItemGroup>
 </Project>
