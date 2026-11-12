@@ -1,7 +1,7 @@
 <Project>
 
     <!-- CORE -->
-    
+
     <PropertyGroup>
         <GrekovVersion>1.2.0-dev3</GrekovVersion>
         <GrekovAssemblyVersion>1.2.0.3</GrekovAssemblyVersion>
@@ -16,14 +16,14 @@
         <GrekovReadersAbstractionsVersion>1.2.0-dev3</GrekovReadersAbstractionsVersion>
         <GrekovReadersAbstractionsAssemblyVersion>1.2.0.3</GrekovReadersAbstractionsAssemblyVersion>
     </PropertyGroup>
-    
+
     <PropertyGroup>
         <GrekovBinaryVersion>1.2.0-dev3</GrekovBinaryVersion>
         <GrekovBinaryAssemblyVersion>1.2.0.3</GrekovBinaryAssemblyVersion>
     </PropertyGroup>
 
     <!-- PROVIDERS -->
-    
+
     <PropertyGroup>
         <GrekovProviderBinaryVersion>1.2.0-dev3</GrekovProviderBinaryVersion>
         <GrekovProviderBinaryAssemblyVersion>1.2.0.3</GrekovProviderBinaryAssemblyVersion>
@@ -41,8 +41,13 @@
         <GrekovReaderXmlAssemblyVersion>1.2.0.3</GrekovReaderXmlAssemblyVersion>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <GrekovReaderJsonVersion>$(GrekovVersion)</GrekovReaderJsonVersion>
+        <GrekovReaderJsonAssemblyVersion>$(GrekovAssemblyVersion)</GrekovReaderJsonAssemblyVersion>
+    </PropertyGroup>
+
     <!-- STORAGES -->
-    
+
     <PropertyGroup>
         <GrekovStorageInMemoryVersion>1.2.0-dev3</GrekovStorageInMemoryVersion>
         <GrekovStorageInMemoryAssemblyVersion>1.2.0.3</GrekovStorageInMemoryAssemblyVersion>
@@ -54,7 +59,7 @@
     </PropertyGroup>
 
     <!-- PROPERTIES -->
-    
+
     <PropertyGroup>
         <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
         <LangVersion>preview</LangVersion>
@@ -70,5 +75,5 @@
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
-    
+
 </Project>
