@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <Version>$(GrekovStorageInMemoryVersion)</Version>
@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Grekov.Abstractions\Grekov.Abstractions.csproj" />
         <ProjectReference Include="..\Grekov\Grekov.csproj" />
     </ItemGroup>
 

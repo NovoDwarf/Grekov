@@ -17,7 +17,6 @@ internal sealed class EfDefStorage : IDefStorage
     {
         await using var context = await _contexts.CreateDbContextAsync(cancellationToken);
 
-        await context.Database.EnsureDeletedAsync(cancellationToken);
         await context.Database.EnsureCreatedAsync(cancellationToken);
     }
 
@@ -91,16 +90,16 @@ internal sealed class EfDefStorage : IDefStorage
         return (Def?)WithContext(context => context.Find(type, id));
     }
 
-    [Obsolete]
     public bool TryGet<T>(DefId id, out T? definition) where T : Def
     {
-        throw new NotImplementedException(); // TODO:
+        definition = Find<T>(id);
+        return definition is not null;
     }
 
-    [Obsolete]
     public bool TryGet(Type type, DefId id, out Def? definition)
     {
-        throw new NotImplementedException(); // TODO:
+        definition = Find(type, id);
+        return definition is not null;
     }
 
     public IEnumerable<T> GetByPackage<T>(string packageId) where T : Def
@@ -116,6 +115,12 @@ internal sealed class EfDefStorage : IDefStorage
     public T? GetByResourcePath<T>(string resourcePath) where T : Def
     {
         return WithContext(context => context.Set<T>().SingleOrDefault(definition => definition.ResourcePath == resourcePath));
+    }
+
+    public T? GetByResourcePath<T>(string packageId, string resourcePath) where T : Def
+    {
+        return WithContext(context => context.Set<T>().SingleOrDefault(definition =>
+            definition.PackageId == packageId && definition.ResourcePath == resourcePath));
     }
 
     public IEnumerable<T> All<T>() where T : Def

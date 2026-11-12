@@ -5,8 +5,18 @@ namespace Grekov.Storages.InMemory;
 
 public sealed class InMemoryDefStorage : IDefStorage
 {
+
+    private static readonly IEqualityComparer<(string PackageId, string ResourcePath)> ResourceComparer =
+        EqualityComparer<(string PackageId, string ResourcePath)>.Create(
+            static (left, right) =>
+                StringComparer.OrdinalIgnoreCase.Equals(left.PackageId, right.PackageId)
+                && StringComparer.OrdinalIgnoreCase.Equals(left.ResourcePath, right.ResourcePath),
+            static key => HashCode.Combine(
+                StringComparer.OrdinalIgnoreCase.GetHashCode(key.PackageId),
+                StringComparer.OrdinalIgnoreCase.GetHashCode(key.ResourcePath)));
+
     private readonly Dictionary<Type, Dictionary<DefId, Def>> _definitionsByType = [];
-    private readonly Dictionary<string, Def> _definitionsByResourcePath = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<(string PackageId, string ResourcePath), Def> _definitionsByResourcePath = new(ResourceComparer);
     private readonly Dictionary<Def, (string PackageId, string ResourcePath)> _origins = new(ReferenceEqualityComparer.Instance);
 
     public Task LoadAsync(IReadOnlyCollection<Type> definitionTypes, CancellationToken cancellationToken = default)
@@ -18,31 +28,41 @@ public sealed class InMemoryDefStorage : IDefStorage
     public Task AddAsync(Def definition, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-
-        var types = GetAssignableDefTypes(definition.GetType()).ToArray();
-
-        foreach (var type in types)
-            if (GetBucketOrEmpty(type).ContainsKey(definition.Id))
-                throw new InvalidOperationException($"Definition [{definition.Id}] of type [{type.FullName}] is already registered.");
-
-        if (!string.IsNullOrWhiteSpace(definition.ResourcePath) && _definitionsByResourcePath.ContainsKey(definition.ResourcePath))
-            throw new InvalidOperationException($"Definition resource [{definition.ResourcePath}] is already registered.");
-
-        foreach (var type in types)
-            GetBucket(type).Add(definition.Id, definition);
-
-        if (!string.IsNullOrWhiteSpace(definition.ResourcePath))
-            _definitionsByResourcePath.Add(definition.ResourcePath, definition);
-
-        _origins.Add(definition, (definition.PackageId, definition.ResourcePath));
-        
+        EnsureCanAdd(definition);
+        AddDefinition(definition);
         return Task.CompletedTask;
     }
 
-    public async Task AddRangeAsync(List<Def> definitions, CancellationToken cancellationToken = default)
+    public Task AddRangeAsync(List<Def> definitions, CancellationToken cancellationToken = default)
     {
-        foreach (var definition in definitions) 
-            await AddAsync(definition, cancellationToken);
+        ArgumentNullException.ThrowIfNull(definitions);
+        var ids = new HashSet<DefId>();
+        var resources = new HashSet<(string PackageId, string ResourcePath)>(ResourceComparer);
+
+        foreach (var definition in definitions)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            EnsureCanAdd(definition);
+
+            if (!ids.Add(definition.Id))
+            {
+                throw new InvalidOperationException($"Definition [{definition.Id}] occurs more than once in the batch.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(definition.ResourcePath)
+                && !resources.Add((definition.PackageId, definition.ResourcePath)))
+            {
+                throw new InvalidOperationException(
+                    $"Definition resource [{definition.ResourcePath}] occurs more than once in package [{definition.PackageId}].");
+            }
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        foreach (var definition in definitions)
+            AddDefinition(definition);
+
+        return Task.CompletedTask;
     }
 
     public Task RemovePackageAsync(string packageId, CancellationToken cancellationToken = default)
@@ -62,7 +82,7 @@ public sealed class InMemoryDefStorage : IDefStorage
             }
 
             if (!string.IsNullOrWhiteSpace(definition.ResourcePath))
-                _definitionsByResourcePath.Remove(definition.ResourcePath);
+                _definitionsByResourcePath.Remove((definition.PackageId, definition.ResourcePath));
 
             _origins.Remove(definition);
         }
@@ -70,8 +90,7 @@ public sealed class InMemoryDefStorage : IDefStorage
         return Task.CompletedTask;
     }
 
-    public Task UnloadAsync(
-        CancellationToken cancellationToken = default)
+    public Task UnloadAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -151,11 +170,32 @@ public sealed class InMemoryDefStorage : IDefStorage
 
     public T? GetByResourcePath<T>(string resourcePath) where T : Def
     {
-        return _definitionsByResourcePath.TryGetValue(resourcePath, out var definition)
+        T? result = null;
+
+        foreach (var entry in _definitionsByResourcePath)
+        {
+            if (!string.Equals(entry.Key.ResourcePath, resourcePath, StringComparison.OrdinalIgnoreCase) || entry.Value is not T candidate)
+            {
+                continue;
+            }
+
+            if (result is not null)
+            {
+                throw new InvalidOperationException($"Definition resource [{resourcePath}] is ambiguous. Specify a package ID.");
+            }
+
+            result = candidate;
+        }
+
+        return result;
+    }
+
+    public T? GetByResourcePath<T>(string packageId, string resourcePath) where T : Def
+    {
+        return _definitionsByResourcePath.TryGetValue((packageId, resourcePath), out var definition)
             ? definition as T
             : null;
     }
-
     public IEnumerable<T> All<T>() where T : Def
     {
         return GetBucketOrEmpty(typeof(T)).Values.Cast<T>();
@@ -188,6 +228,37 @@ public sealed class InMemoryDefStorage : IDefStorage
         packageId = string.Empty;
         resourcePath = string.Empty;
         return false;
+    }
+
+    private void EnsureCanAdd(Def definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+
+        if (GetBucketOrEmpty(typeof(Def)).ContainsKey(definition.Id))
+        {
+            throw new InvalidOperationException($"Definition [{definition.Id}] is already registered.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(definition.ResourcePath)
+            && _definitionsByResourcePath.ContainsKey((definition.PackageId, definition.ResourcePath)))
+        {
+            throw new InvalidOperationException($"Definition resource [{definition.ResourcePath}] is already registered in package [{definition.PackageId}].");
+        }
+    }
+
+    private void AddDefinition(Def definition)
+    {
+        foreach (var type in GetAssignableDefTypes(definition.GetType()))
+        {
+            GetBucket(type).Add(definition.Id, definition);
+        }
+
+        if (!string.IsNullOrWhiteSpace(definition.ResourcePath))
+        {
+            _definitionsByResourcePath.Add((definition.PackageId, definition.ResourcePath), definition);
+        }
+
+        _origins.Add(definition, (definition.PackageId, definition.ResourcePath));
     }
 
     private Dictionary<DefId, Def> GetBucket(Type type)
