@@ -1,4 +1,4 @@
-﻿using Grekov.Abstractions;
+using Grekov.Abstractions;
 using Grekov.Abstractions.Attributes;
 using Grekov.Abstractions.Interfaces;
 using Grekov.Abstractions.Interfaces.Definitions;
@@ -19,7 +19,7 @@ internal static class Program
         Console.WriteLine("=== DI ===");
 
         services.AddLogging();
-        
+
         await using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
 
         Console.WriteLine($"Registered services : {services.Count}");
@@ -83,13 +83,13 @@ internal static class Program
             Console.WriteLine($"  {package.Id} " + $"v{package.Version}");
             Console.WriteLine($"      Enabled : {package.Enabled}");
             Console.WriteLine($"      Errors  : {package.HasErrors}");
-           
+
             if (package.Issues.Count <= 0)
                 continue;
-            
+
             Console.WriteLine("      Issues:");
 
-            foreach (var issue in package.Issues) 
+            foreach (var issue in package.Issues)
                 Console.WriteLine($"          {issue}");
         }
 
@@ -106,6 +106,11 @@ internal static class Program
     {
         Console.WriteLine($"Catalog: {catalog.GetType().Name}");
         Console.WriteLine("[OK] IDefCatalog resolved from DI.");
+
+        foreach (var definition in catalog.All<SwordDef>())
+        {
+            Console.WriteLine($"  Sword [{definition.Id}]: Damage = {definition.Damage}");
+        }
     }
 }
 

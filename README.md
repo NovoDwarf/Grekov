@@ -141,6 +141,47 @@ Definitions may reference other definitions, inherit from base definitions, and 
 A centralized system for loading and accessing localized resources provided by packages.
 
 
+## Definition Loading and Resource Paths
+
+Managed DLLs are loaded from package container streams. Each package has one collectible
+assembly load context for its managed assemblies and dependencies. The host's Grekov and
+Grekov.Abstractions assemblies are shared, so packaged definition types use the same contracts.
+The same loading mechanism works with FileSystem and GPAK packages.
+
+JSON definitions use string structural fields:
+
+```json
+{
+    "$type": "Sword",
+    "Id": "sword_steel",
+    "Damage": 25
+}
+```
+
+Definition resource paths are relative to their package. Different packages may contain the
+same path. Use the package-aware catalog overload when selecting a resource:
+
+```csharp
+var definition = catalog.GetByResourcePath<Def>("base_package", "Items/Sword.json");
+```
+
+The existing one-argument overload continues to work for a unique matching resource. It
+throws `InvalidOperationException` when multiple definitions of the requested type match
+across packages. InMemory storage checks the entire batch for ID and resource conflicts
+before adding any definitions; resource uniqueness is checked within each package.
+
+Loading first reads all selected packages and checks reader errors and conflicts before
+materializing definitions. Blocking reader issues are reported by `DefValidationException`.
+A failed `StartAsync` rolls back its attempted session automatically, including definition
+indexes, inheritance caches, loaded entrypoints and assemblies, storage, and package
+containers. After correcting the data, the same service can be started again.
+
+`StopAsync` cleans the packages recorded for the session even when their enabled/error
+flags change during loading. Cleanup attempts all stages; if cleanup itself fails,
+`AggregateException` reports those failures along with the original startup error.
+Once cleanup begins, it finishes independently of the caller's cancellation token.
+Start and stop operations are serialized, and starting an already running service is rejected.
+
 ## Intended Use Cases
 
 Grekov is designed for applications that require modular content and functionality, such as:
@@ -154,3 +195,21 @@ Grekov is designed for applications that require modular content and functionali
 ## License
 
 [**Grekov**](https://github.com/NovoDwarf/Grekov) is licensed under the [**MIT License**](), see [LICENSE](LICENSE) for more information.
+
+## Reliability and local builds
+
+Required dependencies must be enabled, error-free and satisfy their version constraint.
+`Exact` and `AtLeast` compare numeric versions and prerelease identifiers; build metadata
+is ignored. Invalid constrained versions block the dependent package. Cycles and failed
+required dependencies block their dependent packages as well.
+
+Package converters take precedence over built-in converters. Entrypoint asynchronous
+cleanup is awaited, and simultaneous lifecycle and disposal failures are reported together.
+
+Database storage creates a missing schema without deleting the connected database.
+Existing schema changes require explicit migration by the host; startup does not migrate
+or reset an existing schema. Use a dedicated Grekov database and stop the previous session
+before reloading its definitions.
+
+Ordinary builds do not publish NuGet packages. Local publication is opt-in with
+`-p:PublishLocalPackages=true -p:LocalNugetRepository=<directory>` in a Debug build.

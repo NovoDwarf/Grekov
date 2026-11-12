@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\Sources\Grekov.Abstractions\Grekov.Abstractions.csproj" />
       <ProjectReference Include="..\..\Sources\Grekov.Providers.Binary\Grekov.Providers.Binary.csproj" />
       <ProjectReference Include="..\..\Sources\Grekov.Providers.FileSystem\Grekov.Providers.FileSystem.csproj" />
       <ProjectReference Include="..\..\Sources\Grekov.Readers.Xml\Grekov.Readers.Xml.csproj" />
