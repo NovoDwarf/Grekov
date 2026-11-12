@@ -78,14 +78,22 @@ public sealed class DefJsonReaderTests
     private static (IReadOnlyList<DefRaw> Definitions, IReadOnlyList<DefIssue> Issues) Read(string json)
     {
         var services = new ServiceCollection();
+        
         services.AddFileSystemServices();
+        
         using var provider = services.BuildServiceProvider();
+       
         var types = new DefTypeRegistry();
+       
         types.Refresh([typeof(JsonSampleDef).Assembly]);
+       
         var issues = new DefIssueRegistry();
         var reader = ActivatorUtilities.CreateInstance<DefJsonReader>(provider, types, issues);
+       
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        
         var definitions = reader.ReadDefinitions(stream, new DefReadContext("test", "Sample.json", "sample", []));
+        
         return (definitions, issues.GetIssues("test"));
     }
 }

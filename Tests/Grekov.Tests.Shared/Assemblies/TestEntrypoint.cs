@@ -3,36 +3,36 @@ using Grekov.Abstractions.Interfaces.Packaging;
 
 namespace Grekov.Tests.Shared.Assemblies;
 
-public sealed class TestEntrypoint(EntrypointState state) : IEntrypoint, IAsyncDisposable
+public sealed class TestEntrypoint : IEntrypoint, IAsyncDisposable
 {
-    public void OnLoad(IPackageContext context)
+    private readonly EntrypointState _state;
+
+    public TestEntrypoint(EntrypointState state)
     {
-        if (state.FailLoad)
-        {
-            throw new InvalidOperationException("Lifecycle failure");
-        }
+        _state = state;
     }
 
-    public void OnLoaded()
+    public void OnLoad(IPackageContext context)
     {
+        if (_state.FailLoad)
+            throw new InvalidOperationException("Lifecycle failure");
     }
+
+    public void OnLoaded() { }
 
     public void OnUnload()
     {
-        if (state.FailUnload)
-        {
+        if (_state.FailUnload)
             throw new InvalidOperationException("Lifecycle failure");
-        }
     }
 
     public async ValueTask DisposeAsync()
     {
         await Task.Yield();
-        state.Disposed = true;
+       
+        _state.Disposed = true;
 
-        if (state.FailDispose)
-        {
+        if (_state.FailDispose)
             throw new IOException("Disposal failure");
-        }
     }
 }

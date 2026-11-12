@@ -15,9 +15,11 @@ public sealed class DatabaseStorageTests : IDisposable
     public DatabaseStorageTests()
     {
         _types.Refresh([typeof(DatabaseSampleDef).Assembly]);
+      
         var options = new DbContextOptionsBuilder<DefDbContext>()
             .UseSqlite($"Data Source={_path};Pooling=False")
             .Options;
+        
         _factory = new TestContextFactory(options, _types);
     }
 
@@ -26,9 +28,11 @@ public sealed class DatabaseStorageTests : IDisposable
     {
         // Arrange
         await using var context = _factory.CreateDbContext();
+      
         await context.Database.EnsureCreatedAsync();
         await context.Database.ExecuteSqlRawAsync("CREATE TABLE marker (value INTEGER)");
         await context.Database.ExecuteSqlRawAsync("INSERT INTO marker VALUES (42)");
+      
         var storage = new EfDefStorage(_factory);
 
         // Act

@@ -20,9 +20,12 @@ public sealed class EntrypointTests
     {
         // Arrange
         var state = new EntrypointState { FailLoad = loading, FailUnload = !loading, FailDispose = true };
-        using var services = new ServiceCollection().AddSingleton(state).BuildServiceProvider();
+        await using var services = new ServiceCollection().AddSingleton(state).BuildServiceProvider();
+       
         var registry = new AssemblyRegistry(Options.Create(new GrekovOptions()));
+        
         registry.Add("test", typeof(TestEntrypoint).Assembly, AssemblyLoadContext.Default);
+        
         var service = new EntrypointService(registry, services, new DefaultContextFactory(services, registry));
         var packages = new[] { new PackageInstance
         {
@@ -50,14 +53,17 @@ public sealed class EntrypointTests
     {
         // Arrange
         var state = new EntrypointState();
-        using var services = new ServiceCollection().AddSingleton(state).BuildServiceProvider();
+        await using var services = new ServiceCollection().AddSingleton(state).BuildServiceProvider();
         var registry = new AssemblyRegistry(Options.Create(new GrekovOptions()));
+        
         registry.Add("test", typeof(TestEntrypoint).Assembly, AssemblyLoadContext.Default);
+       
         var service = new EntrypointService(registry, services, new DefaultContextFactory(services, registry));
         var packages = new[] { new PackageInstance
         {
             Id = "test", Version = "1.0", Dependencies = [], Container = new TestPackageContainer()
         } };
+        
         await service.LoadAsync(packages);
 
         // Act
