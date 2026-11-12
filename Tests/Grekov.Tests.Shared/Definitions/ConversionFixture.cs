@@ -12,10 +12,8 @@ public sealed class ConversionFixture : IDisposable
     {
         var registry = new DefValueConverterRegistry(_services);
 
-        if (includePackageConverters)
-        {
+        if (includePackageConverters) 
             registry.Refresh([typeof(PayloadConverter).Assembly]);
-        }
 
         return new DefValueConverter(registry);
     }

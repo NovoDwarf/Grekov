@@ -12,22 +12,28 @@ public abstract class DatabaseTestBase : IAsyncLifetime
 {
     private readonly TemporaryDirectory _directory = new();
     private readonly TestDbContextFactory _factory;
-    protected IDefStorage Storage { get; }
-    protected IReadOnlyCollection<Type> DefinitionTypes { get; }
-
+    
     protected DatabaseTestBase()
     {
         var types = new DefTypeRegistry();
+       
         types.Refresh([typeof(DatabaseSampleDef).Assembly]);
+        
         DefinitionTypes = types.Types;
+      
         var path = Path.Combine(_directory.Path, "definitions.db");
         var options = new DbContextOptionsBuilder<DefDbContext>()
             .UseSqlite($"Data Source={path};Pooling=False")
             .Options;
+      
         _factory = new TestDbContextFactory(options, types);
+       
         Storage = new EfDefStorage(_factory);
     }
 
+    protected IDefStorage Storage { get; }
+    protected IReadOnlyCollection<Type> DefinitionTypes { get; }
+    
     public async Task InitializeAsync()
     {
         await using var context = _factory.CreateDbContext();

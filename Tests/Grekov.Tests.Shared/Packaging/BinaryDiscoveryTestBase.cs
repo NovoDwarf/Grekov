@@ -18,8 +18,10 @@ public abstract class BinaryDiscoveryTestBase : IAsyncLifetime
     {
         var goodRoot = Path.Combine(_directory.Path, "good");
         var badRoot = Path.Combine(_directory.Path, "bad");
+        
         Directory.CreateDirectory(goodRoot);
         Directory.CreateDirectory(badRoot);
+        
         var manifest = Path.Combine(_directory.Path, "manifest.json");
         ArchivePath = Path.Combine(goodRoot, "valid.gpak");
         await File.WriteAllTextAsync(manifest, """{"Id":"valid","Version":"1.0"}""");
@@ -36,8 +38,10 @@ public abstract class BinaryDiscoveryTestBase : IAsyncLifetime
             builder.Readers(readers => readers.Json());
             builder.Providers(providers => providers.Binary(options => options.Roots.AddRange([goodRoot, badRoot])));
         });
+       
         _services = services.BuildServiceProvider();
         PackageProvider = _services.GetServices<IPackageProvider>().Single();
+       
         var discovered = await PackageProvider.DiscoverAsync();
 
         try
