@@ -13,7 +13,13 @@ public sealed class AssemblyUnloadTests
     [Fact]
     public void MaterializedTypesDoNotKeepPackageAlive()
     {
-        var reference = MaterializeAndUnload();
+        // Arrange
+        var directory = Path.Combine(AppContext.BaseDirectory, "TestPackage");
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var converter = new DefValueConverter(new DefValueConverterRegistry(services));
+
+        // Act
+        var reference = MaterializeAndUnload(directory, converter);
 
         for (var attempt = 0; attempt < 10 && reference.IsAlive; attempt++)
         {
@@ -22,19 +28,17 @@ public sealed class AssemblyUnloadTests
             GC.Collect();
         }
 
+        // Assert
         Assert.False(reference.IsAlive);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static WeakReference MaterializeAndUnload()
+    private static WeakReference MaterializeAndUnload(string directory, DefValueConverter converter)
     {
         var context = new AssemblyLoadContext("Unload regression", isCollectible: true);
-        var directory = Path.Combine(AppContext.BaseDirectory, "TestPackage");
         context.LoadFromAssemblyPath(Path.Combine(directory, "Grekov.TestDependency.dll"));
         var assembly = context.LoadFromAssemblyPath(Path.Combine(directory, "Grekov.TestPackage.dll"));
         var instance = Activator.CreateInstance(assembly.GetType("Grekov.TestPackage.PackagedDef", throwOnError: true)!)!;
-        using var services = new ServiceCollection().BuildServiceProvider();
-        var converter = new DefValueConverter(new DefValueConverterRegistry(services));
         DefFieldApplier.Apply(instance, new Dictionary<string, DefValue>
         {
             ["Amount"] = DefValue.ScalarValue("5")

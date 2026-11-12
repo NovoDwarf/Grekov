@@ -5,47 +5,70 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Grekov.Tests;
 
-public sealed class DatabaseStorageTests
+public sealed class DatabaseStorageTests : IDisposable
 {
-    [Fact]
-    public async Task LoadingPreservesExistingDatabaseAndSupportsTryGet()
+    private readonly string _path = Path.Combine(Path.GetTempPath(), $"grekov-{Guid.NewGuid():N}.db");
+    private readonly DefTypeRegistry _types = new();
+    private readonly TestContextFactory _factory;
+
+    public DatabaseStorageTests()
     {
-        var path = Path.Combine(Path.GetTempPath(), $"grekov-{Guid.NewGuid():N}.db");
-        var types = new DefTypeRegistry();
-        types.Refresh([typeof(DatabaseSampleDef).Assembly]);
-        var options = new DbContextOptionsBuilder<DefDbContext>().UseSqlite($"Data Source={path};Pooling=False").Options;
-        var factory = new TestContextFactory(options, types);
+        _types.Refresh([typeof(DatabaseSampleDef).Assembly]);
+        var options = new DbContextOptionsBuilder<DefDbContext>()
+            .UseSqlite($"Data Source={_path};Pooling=False")
+            .Options;
+        _factory = new TestContextFactory(options, _types);
+    }
 
-        try
+    [Fact]
+    public async Task LoadingPreservesExistingDatabase()
+    {
+        // Arrange
+        await using var context = _factory.CreateDbContext();
+        await context.Database.EnsureCreatedAsync();
+        await context.Database.ExecuteSqlRawAsync("CREATE TABLE marker (value INTEGER)");
+        await context.Database.ExecuteSqlRawAsync("INSERT INTO marker VALUES (42)");
+        var storage = new EfDefStorage(_factory);
+
+        // Act
+        await storage.LoadAsync(_types.Types);
+
+        // Assert
+        var value = await context.Database.SqlQueryRaw<int>("SELECT value AS Value FROM marker").SingleAsync();
+        Assert.Equal(42, value);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task TryGetReportsWhetherDefinitionExists(bool exists)
+    {
+        // Arrange
+        var storage = new EfDefStorage(_factory);
+        await storage.LoadAsync(_types.Types);
+        var id = DefId.Parse("sample");
+
+        if (exists)
         {
-            await using (var context = factory.CreateDbContext())
-            {
-                await context.Database.EnsureCreatedAsync();
-                await context.Database.ExecuteSqlRawAsync("CREATE TABLE marker (value INTEGER)");
-                await context.Database.ExecuteSqlRawAsync("INSERT INTO marker VALUES (42)");
-            }
-
-            var storage = new EfDefStorage(factory);
-            await storage.LoadAsync(types.Types);
-            await using (var context = factory.CreateDbContext())
-            {
-                Assert.Equal(42, await context.Database.SqlQueryRaw<int>("SELECT value AS Value FROM marker").SingleAsync());
-            }
-
             var definition = new DatabaseSampleDef();
-            typeof(Def).GetProperty(nameof(Def.Id))!.SetValue(definition, DefId.Parse("sample"));
+            typeof(Def).GetProperty(nameof(Def.Id))!.SetValue(definition, id);
             await storage.AddAsync(definition);
-            Assert.True(storage.TryGet<DatabaseSampleDef>(DefId.Parse("sample"), out var generic));
-            Assert.NotNull(generic);
-            Assert.True(storage.TryGet(typeof(DatabaseSampleDef), DefId.Parse("sample"), out var untyped));
-            Assert.NotNull(untyped);
-            Assert.False(storage.TryGet<DatabaseSampleDef>(DefId.Parse("missing"), out _));
-            Assert.False(storage.TryGet(typeof(DatabaseSampleDef), DefId.Parse("missing"), out _));
         }
-        finally
-        {
-            File.Delete(path);
-        }
+
+        // Act
+        var genericFound = storage.TryGet<DatabaseSampleDef>(id, out var generic);
+        var untypedFound = storage.TryGet(typeof(DatabaseSampleDef), id, out var untyped);
+
+        // Assert
+        Assert.Equal(exists, genericFound);
+        Assert.Equal(exists, untypedFound);
+        Assert.Equal(exists, generic is not null);
+        Assert.Equal(exists, untyped is not null);
+    }
+
+    public void Dispose()
+    {
+        File.Delete(_path);
     }
 
     private sealed class TestContextFactory(DbContextOptions<DefDbContext> options, DefTypeRegistry types)

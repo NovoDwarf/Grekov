@@ -10,21 +10,33 @@ public sealed class PackageGraphTests
     [InlineData(true)]
     public void RejectsUnavailableDependencyChains(bool disabled)
     {
+        // Arrange
         var a = Package("a", "b");
         var b = Package("b", "missing");
         b.Enabled = !disabled;
         var packages = new[] { a, b };
-        Assert.Empty(PackageGraph.TopologicalSort(packages.Where(p => p.Enabled).ToArray(),
-            id => packages.SingleOrDefault(p => p.Id == id)));
+
+        // Act
+        var result = PackageGraph.TopologicalSort(packages.Where(p => p.Enabled).ToArray(),
+            id => packages.SingleOrDefault(p => p.Id == id));
+
+        // Assert
+        Assert.Empty(result);
         Assert.True(a.HasErrors);
     }
 
     [Fact]
     public void RejectsEntireCycle()
     {
+        // Arrange
         var a = Package("a", "b");
         var b = Package("b", "a");
-        Assert.Empty(PackageGraph.TopologicalSort([a, b], _ => null));
+
+        // Act
+        var result = PackageGraph.TopologicalSort([a, b], _ => null);
+
+        // Assert
+        Assert.Empty(result);
         Assert.True(a.HasErrors);
         Assert.True(b.HasErrors);
     }
@@ -38,10 +50,15 @@ public sealed class PackageGraphTests
     [InlineData("invalid", "2.0", PackageDependencyOperator.AtLeast, false)]
     public void EnforcesVersions(string actual, string required, PackageDependencyOperator op, bool valid)
     {
+        // Arrange
         var a = new PackageInstance { Id = "a", Version = "1.0", Container = new TestPackageContainer(),
             Dependencies = [new PackageDependency { PackageId = "b", Version = required, Operator = op }] };
         var b = new PackageInstance { Id = "b", Version = actual, Dependencies = [], Container = new TestPackageContainer() };
+
+        // Act
         var result = PackageGraph.TopologicalSort([a, b], _ => null);
+
+        // Assert
         Assert.Equal(valid, result.Contains(a));
     }
 

@@ -16,6 +16,7 @@ public sealed class EntrypointTests
     [InlineData(false)]
     public async Task PreservesLifecycleAndDisposalFailures(bool loading)
     {
+        // Arrange
         var state = new EntrypointState { FailLoad = loading, FailUnload = !loading, FailDispose = true };
         using var services = new ServiceCollection().AddSingleton(state).BuildServiceProvider();
         var registry = new AssemblyRegistry(Options.Create(new GrekovOptions()));
@@ -31,8 +32,12 @@ public sealed class EntrypointTests
             await service.LoadAsync(packages);
         }
 
-        var failure = await Assert.ThrowsAsync<AggregateException>(() => loading
+        // Act
+        var exception = await Record.ExceptionAsync(() => loading
             ? service.LoadAsync(packages) : service.UnloadAsync(packages));
+
+        // Assert
+        var failure = Assert.IsType<AggregateException>(exception);
         Assert.Contains(failure.InnerExceptions, error => error.Message == "Lifecycle failure");
         Assert.Contains(failure.InnerExceptions, error => error.Message == "Disposal failure");
         Assert.True(state.Disposed);
@@ -41,6 +46,7 @@ public sealed class EntrypointTests
     [Fact]
     public async Task AwaitsAsynchronousDisposal()
     {
+        // Arrange
         var state = new EntrypointState();
         using var services = new ServiceCollection().AddSingleton(state).BuildServiceProvider();
         var registry = new AssemblyRegistry(Options.Create(new GrekovOptions()));
@@ -51,7 +57,11 @@ public sealed class EntrypointTests
             Id = "test", Version = "1.0", Dependencies = [], Container = new TestPackageContainer()
         } };
         await service.LoadAsync(packages);
+
+        // Act
         await service.UnloadAsync(packages);
+
+        // Assert
         Assert.True(state.Disposed);
     }
 }

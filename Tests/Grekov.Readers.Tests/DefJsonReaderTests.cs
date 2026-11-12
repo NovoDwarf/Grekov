@@ -13,7 +13,8 @@ public sealed class DefJsonReaderTests
     [Fact]
     public void ReadsStructuralStringValuesWithoutChangingFieldTokens()
     {
-        var (definitions, issues) = Read("""
+        // Arrange
+        const string json = """
             {
                 "$type": "Sample",
                 "Id": "child",
@@ -23,8 +24,12 @@ public sealed class DefJsonReaderTests
                 "Items": [1, 2],
                 "Optional": null
             }
-            """);
+            """;
 
+        // Act
+        var (definitions, issues) = Read(json);
+
+        // Assert
         var definition = Assert.Single(definitions);
         Assert.Empty(issues);
         Assert.Equal(typeof(JsonSampleDef), definition.Type);
@@ -39,10 +44,15 @@ public sealed class DefJsonReaderTests
     [Fact]
     public void StructuralPropertyNamesAreCaseInsensitive()
     {
-        var (definitions, issues) = Read("""
+        // Arrange
+        const string json = """
             { "$TYPE": "Sample", "ID": "sample", "PARENT": "parent" }
-            """);
+            """;
 
+        // Act
+        var (definitions, issues) = Read(json);
+
+        // Assert
         Assert.Equal(DefId.Parse("parent"), Assert.Single(definitions).ParentId);
         Assert.Empty(issues);
     }
@@ -54,8 +64,12 @@ public sealed class DefJsonReaderTests
     [InlineData("{\"$type\":\"Sample\",\"Id\":[]}", "definition.id.invalid")]
     public void InvalidStructuralTypesAreStillRejected(string json, string code)
     {
+        // Arrange: json and code are supplied by the theory.
+
+        // Act
         var (definitions, issues) = Read(json);
 
+        // Assert
         Assert.Empty(definitions);
         Assert.Contains(issues, issue => issue.Code == code);
     }

@@ -10,6 +10,7 @@ public sealed class BinaryDiscoveryTests
     [Fact]
     public async Task FailedDiscoveryClosesPreviouslyOpenedArchives()
     {
+        // Arrange
         var directory = Path.Combine(Path.GetTempPath(), $"grekov-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
         var goodRoot = Path.Combine(directory, "good");
@@ -35,11 +36,16 @@ public sealed class BinaryDiscoveryTests
                 builder.Providers(providers => providers.Binary(options => options.Roots.AddRange([goodRoot, badRoot])));
             });
             using var provider = services.BuildServiceProvider();
-            var packages = Assert.Single(provider.GetServices<IPackageProvider>());
+            var packages = provider.GetServices<IPackageProvider>().Single();
             var discovered = await packages.DiscoverAsync();
-            Assert.Single(discovered).Dispose();
+            discovered.Single().Dispose();
             File.WriteAllText(Path.Combine(badRoot, "invalid.gpak"), "invalid");
-            await Assert.ThrowsAnyAsync<Exception>(async () => await packages.DiscoverAsync());
+
+            // Act
+            var exception = await Record.ExceptionAsync(async () => await packages.DiscoverAsync());
+
+            // Assert
+            Assert.NotNull(exception);
             using var exclusive = File.Open(archivePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
         }
         finally
