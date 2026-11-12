@@ -13,18 +13,13 @@ namespace Grekov.Readers.Xml;
 
 public sealed class DefXmlReader : IDefFormatReader
 {
-	private static readonly IReadOnlySet<string> SupportedExtensions =
-		new HashSet<string>([".xml"], StringComparer.OrdinalIgnoreCase);
-
-	private static readonly IReadOnlySet<string> ReservedAttributes =
-		new HashSet<string>(["Id", "Parent"], StringComparer.OrdinalIgnoreCase);
+	private static readonly IReadOnlySet<string> SupportedExtensions = new HashSet<string>([".xml"], StringComparer.OrdinalIgnoreCase);
+	private static readonly IReadOnlySet<string> ReservedAttributes = new HashSet<string>(["Id", "Parent"], StringComparer.OrdinalIgnoreCase);
 
 	private static readonly XmlSerializer ManifestSerializer = new(typeof(PackageManifest));
 
 	private readonly IFileStreamer _fileStreamer;
-
-	private readonly DefIssueRegistry _issueRegistry;
-
+	private readonly DefIssueRegistry _issues;
 	private readonly ILogger<DefXmlReader> _logger;
 	private readonly IPathParser _pathParser;
 	private readonly DefTypeRegistry _typeRegistry;
@@ -33,13 +28,13 @@ public sealed class DefXmlReader : IDefFormatReader
 		DefTypeRegistry typeRegistry,
 		IPathParser pathParser,
 		IFileStreamer fileStreamer,
-		DefIssueRegistry issueRegistry,
+		DefIssueRegistry issues,
 		ILogger<DefXmlReader> logger)
 	{
 		_typeRegistry = typeRegistry;
 		_pathParser = pathParser;
 		_fileStreamer = fileStreamer;
-		_issueRegistry = issueRegistry;
+		_issues = issues;
 		_logger = logger;
 	}
 
@@ -70,7 +65,7 @@ public sealed class DefXmlReader : IDefFormatReader
 
 		if (document.Root is null)
 		{
-			_issueRegistry.Add(DefIssues.FileEmpty(context.PackageId, context.ResourcePath));
+			_issues.Add(DefIssues.FileEmpty(context.PackageId, context.ResourcePath));
 			return [];
 		}
 
@@ -105,7 +100,7 @@ public sealed class DefXmlReader : IDefFormatReader
 
 		if (!_typeRegistry.TryResolveByElementName(elementName, out var typeName))
 		{
-			_issueRegistry.Add(DefIssues.UnknownType(context.PackageId, context.ResourcePath, elementName,
+			_issues.Add(DefIssues.UnknownType(context.PackageId, context.ResourcePath, elementName,
 				GetLine(element), GetColumn(element)));
 			return null;
 		}
@@ -138,7 +133,7 @@ public sealed class DefXmlReader : IDefFormatReader
 
 		if (string.IsNullOrWhiteSpace(value))
 		{
-			_issueRegistry.Add(DefIssues.MissingId(context.PackageId, context.ResourcePath, GetLine(element),
+			_issues.Add(DefIssues.MissingId(context.PackageId, context.ResourcePath, GetLine(element),
 				GetColumn(element)));
 			return null;
 		}
@@ -149,7 +144,7 @@ public sealed class DefXmlReader : IDefFormatReader
 		}
 		catch (Exception exception)when (exception is ArgumentException or FormatException)
 		{
-			_issueRegistry.Add(DefIssues.InvalidId(context.PackageId, context.ResourcePath, value, GetLine(element),
+			_issues.Add(DefIssues.InvalidId(context.PackageId, context.ResourcePath, value, GetLine(element),
 				GetColumn(element), exception));
 			return null;
 		}
@@ -168,7 +163,7 @@ public sealed class DefXmlReader : IDefFormatReader
 		}
 		catch (Exception exception)when (exception is ArgumentException or FormatException)
 		{
-			_issueRegistry.Add(DefIssues.InvalidParentId(context.PackageId, context.ResourcePath, value,
+			_issues.Add(DefIssues.InvalidParentId(context.PackageId, context.ResourcePath, value,
 				GetLine(element), GetColumn(element), exception));
 			return null;
 		}
@@ -208,6 +203,7 @@ public sealed class DefXmlReader : IDefFormatReader
 		{
 			var children = group.ToArray();
 			var childPath = $"{path}.{group.Key}";
+
 			var value = children.Length == 1
 				? ReadElementValue(children[0], context, childPath)
 				: DefValue.ListValue([.. children.Select(child => ReadElementValue(child, context, childPath))]);
@@ -244,8 +240,7 @@ public sealed class DefXmlReader : IDefFormatReader
 		if (fields.TryAdd(name, value))
 			return;
 
-		_issueRegistry.Add(DefIssues.DuplicateField(context.PackageId, context.ResourcePath, name, GetLine(element),
-			GetColumn(element)));
+		_issues.Add(DefIssues.DuplicateField(context.PackageId, context.ResourcePath, name, GetLine(element), GetColumn(element)));
 	}
 
 	private string? GetStructuralValue(XElement element, string name, DefReadContext context)
@@ -258,19 +253,16 @@ public sealed class DefXmlReader : IDefFormatReader
 
 		if (attribute is not null && children.Length > 0)
 		{
-			_issueRegistry.Add(DefIssues.StructuralValueConflict(context.PackageId, context.ResourcePath, name,
-				GetLine(element), GetColumn(element)));
+			_issues.Add(DefIssues.StructuralValueConflict(context.PackageId, context.ResourcePath, name, GetLine(element), GetColumn(element)));
 			return null;
 		}
 
-		if (children.Length > 1)
-		{
-			_issueRegistry.Add(DefIssues.MultipleStructuralValues(context.PackageId, context.ResourcePath, name,
-				GetLine(element), GetColumn(element)));
-			return null;
-		}
+		if (children.Length <= 1)
+			return attribute?.Value ?? children.FirstOrDefault()?.Value;
 
-		return attribute?.Value ?? children.FirstOrDefault()?.Value;
+		_issues.Add(DefIssues.MultipleStructuralValues(context.PackageId, context.ResourcePath, name, GetLine(element), GetColumn(element)));
+
+		return null;
 	}
 
 	private static int? GetLine(XElement element)

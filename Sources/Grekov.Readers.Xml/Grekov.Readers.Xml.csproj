@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <Version>$(GrekovReaderXmlVersion)</Version>
@@ -7,8 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Grekov.Abstractions\Grekov.Abstractions.csproj" />
         <ProjectReference Include="..\Grekov\Grekov.csproj" />
-        <PackageReference Include="NovoDwarf.FS" Version="1.0.1" />
+        <PackageReference Include="NovoDwarf.FS" Version="2.0.0" />
     </ItemGroup>
-    
+
 </Project>

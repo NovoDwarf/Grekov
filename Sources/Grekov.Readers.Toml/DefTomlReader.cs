@@ -38,29 +38,21 @@ internal sealed class DefTomlReader : DefStructuredReader<TomlTable>
 	{
 		using var reader = new StreamReader(stream);
 
-		return TomlSerializer.Deserialize<PackageManifest>(
-			reader.ReadToEnd());
+		return TomlSerializer.Deserialize<PackageManifest>(reader.ReadToEnd());
 	}
 
 	protected override TomlTable Deserialize(Stream stream)
 	{
 		using var reader = new StreamReader(stream);
 
-		return TomlSerializer.Deserialize<TomlTable>(
-			reader.ReadToEnd());
+		return TomlSerializer.Deserialize<TomlTable>(reader.ReadToEnd());
 	}
 
-	protected override bool TryGetValue(
-		TomlTable document,
-		string name,
-		out object? value)
+	protected override bool TryGetValue(TomlTable document, string name, out object? value)
 	{
 		foreach (var pair in document)
 		{
-			if (!string.Equals(
-				    pair.Key,
-				    name,
-				    StringComparison.OrdinalIgnoreCase))
+			if (!string.Equals(pair.Key, name, StringComparison.OrdinalIgnoreCase))
 				continue;
 
 			value = pair.Value;
@@ -71,15 +63,12 @@ internal sealed class DefTomlReader : DefStructuredReader<TomlTable>
 		return false;
 	}
 
-	protected override IEnumerable<KeyValuePair<string, object?>> GetProperties(
-		TomlTable document)
+	protected override IEnumerable<KeyValuePair<string, object?>> GetProperties(TomlTable document)
 	{
 		return document;
 	}
 
-	protected override DefValue ReadValue(
-		object? value,
-		DefReadContext context)
+	protected override DefValue ReadValue(object? value, DefReadContext context)
 	{
 		return value switch
 		{
@@ -90,25 +79,23 @@ internal sealed class DefTomlReader : DefStructuredReader<TomlTable>
 		};
 	}
 
-	private DefValue ReadObject(
-		TomlTable table,
-		DefReadContext context)
+	private DefValue ReadObject(TomlTable table, DefReadContext context)
 	{
 		var values = new Dictionary<string, DefValue>(
 			StringComparer.OrdinalIgnoreCase);
 
-		foreach (var pair in table) values[pair.Key] = ReadValue(pair.Value, context);
+		foreach (var pair in table)
+			values[pair.Key] = ReadValue(pair.Value, context);
 
 		return DefValue.ObjectValue(values);
 	}
 
-	private DefValue ReadArray(
-		TomlArray array,
-		DefReadContext context)
+	private DefValue ReadArray(TomlArray array, DefReadContext context)
 	{
 		var values = new DefValue[array.Count];
 
-		for (var i = 0; i < array.Count; i++) values[i] = ReadValue(array[i], context);
+		for (var i = 0; i < array.Count; i++)
+			values[i] = ReadValue(array[i], context);
 
 		return DefValue.ListValue(values);
 	}

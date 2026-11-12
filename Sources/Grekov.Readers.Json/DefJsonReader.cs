@@ -102,7 +102,7 @@ internal sealed class DefJsonReader : DefStructuredReader<JObject>
 			return false;
 		}
 
-		value = property.Value;
+		value = property.Value is JValue scalar ? scalar.Value : property.Value;
 		return true;
 	}
 

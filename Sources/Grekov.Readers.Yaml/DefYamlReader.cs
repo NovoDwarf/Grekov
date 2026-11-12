@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Globalization;
 using Grekov.Abstractions;
 using Grekov.Definitions.Registry;
@@ -9,162 +10,138 @@ using YamlDotNet.Serialization;
 
 namespace Grekov.Readers.Yaml;
 
-internal sealed class DefYamlReader
-	: DefStructuredReader<Dictionary<string, object?>>
+internal sealed class DefYamlReader : DefStructuredReader<Dictionary<string, object?>>
 {
-	private static readonly IReadOnlySet<string> SupportedExtensions =
-		new HashSet<string>(
-			[".yaml", ".yml"],
-			StringComparer.OrdinalIgnoreCase);
+    private static readonly IReadOnlySet<string> SupportedExtensions = new HashSet<string>([".yaml", ".yml"], StringComparer.OrdinalIgnoreCase);
 
-	private readonly IDeserializer _deserializer;
+    private readonly IDeserializer _deserializer;
 
-	public DefYamlReader(
-		DefTypeRegistry typeRegistry,
-		IPathParser pathParser,
-		IFileStreamer fileStreamer,
-		DefIssueRegistry issues,
-		IDeserializer deserializer)
-		: base(typeRegistry, pathParser, fileStreamer, issues)
-	{
-		_deserializer = deserializer;
-	}
+    public DefYamlReader(
+        DefTypeRegistry typeRegistry,
+        IPathParser pathParser,
+        IFileStreamer fileStreamer,
+        DefIssueRegistry issues,
+        IDeserializer deserializer)
+        : base(typeRegistry, pathParser, fileStreamer, issues)
+    {
+        _deserializer = deserializer;
+    }
 
-	public override IReadOnlySet<string> Extensions =>
-		SupportedExtensions;
+    public override IReadOnlySet<string> Extensions =>
+        SupportedExtensions;
 
-	public override PackageManifest ReadManifest(string manifestPath)
-	{
-		ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
+    public override PackageManifest ReadManifest(string manifestPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
 
-		using var stream = FileStreamer.OpenRead(manifestPath);
+        using var stream = FileStreamer.OpenRead(manifestPath);
 
-		return ReadManifest(stream, manifestPath);
-	}
+        return ReadManifest(stream, manifestPath);
+    }
 
-	public override PackageManifest ReadManifest(Stream stream)
-	{
-		return ReadManifest(stream, "<stream>");
-	}
+    public override PackageManifest ReadManifest(Stream stream)
+    {
+        return ReadManifest(stream, "<stream>");
+    }
 
-	private PackageManifest ReadManifest(
-		Stream stream,
-		string source)
-	{
-		try
-		{
-			using var reader = new StreamReader(stream);
+    private PackageManifest ReadManifest(Stream stream, string source)
+    {
+        try
+        {
+            using var reader = new StreamReader(stream);
 
-			var manifest = _deserializer.Deserialize<PackageManifest>(reader)
-			               ?? throw new InvalidDataException(
-				               "YAML manifest does not contain a valid package manifest.");
+            var manifest = _deserializer.Deserialize<PackageManifest>(reader)
+                           ?? throw new InvalidDataException(
+                               "YAML manifest does not contain a valid package manifest.");
 
-			if (string.IsNullOrWhiteSpace(manifest.Id) &&
-			    !string.Equals(
-				    source,
-				    "<stream>",
-				    StringComparison.Ordinal))
-				manifest.Id = PathParser.GetDirectoryName(source);
+            if (string.IsNullOrWhiteSpace(manifest.Id) && !string.Equals(source, "<stream>", StringComparison.Ordinal))
+                manifest.Id = PathParser.GetDirectoryName(source);
 
-			return manifest;
-		}
-		catch (YamlException exception)
-		{
-			throw new InvalidDataException(
-				$"Invalid YAML package manifest: [{source}].",
-				exception);
-		}
-	}
+            return manifest;
+        }
+        catch (YamlException exception)
+        {
+            throw new InvalidDataException($"Invalid YAML package manifest: [{source}].", exception);
+        }
+    }
 
-	protected override Dictionary<string, object?> Deserialize(Stream stream)
-	{
-		using var reader = new StreamReader(stream);
+    protected override Dictionary<string, object?> Deserialize(Stream stream)
+    {
+        using var reader = new StreamReader(stream);
 
-		return _deserializer.Deserialize<Dictionary<string, object?>>(reader);
-	}
+        return _deserializer.Deserialize<Dictionary<string, object?>>(reader);
+    }
 
-	protected override bool TryGetValue(
-		Dictionary<string, object?> document,
-		string name,
-		out object? value)
-	{
-		foreach (var pair in document)
-		{
-			if (!pair.Key.Equals(
-				    name,
-				    StringComparison.OrdinalIgnoreCase))
-				continue;
+    protected override bool TryGetValue(Dictionary<string, object?> document, string name, out object? value)
+    {
+        foreach (var pair in document)
+        {
+            if (!pair.Key.Equals(name, StringComparison.OrdinalIgnoreCase))
+                continue;
 
-			value = pair.Value;
-			return true;
-		}
+            value = pair.Value;
+            return true;
+        }
 
-		value = null;
-		return false;
-	}
+        value = null;
+        return false;
+    }
 
-	protected override IEnumerable<KeyValuePair<string, object?>> GetProperties(
-		Dictionary<string, object?> document)
-	{
-		return document;
-	}
+    protected override IEnumerable<KeyValuePair<string, object?>> GetProperties(Dictionary<string, object?> document)
+    {
+        return document;
+    }
 
-	protected override DefValue ReadValue(
-		object? value,
-		DefReadContext context)
-	{
-		return value switch
-		{
-			null => DefValue.Null(),
+    protected override DefValue ReadValue(object? value, DefReadContext context)
+    {
+        return value switch
+        {
+            null => DefValue.Null(),
+            IDictionary dictionary => ReadObject(dictionary, context),
+            IList list => ReadArray(list, context),
+            _ => DefValue.ScalarValue(ConvertScalar(value))
+        };
+    }
 
-			Dictionary<string, object?> dictionary =>
-				ReadObject(dictionary, context),
+    private DefValue ReadObject(IDictionary document, DefReadContext context)
+    {
+        var values = new Dictionary<string, DefValue>(StringComparer.OrdinalIgnoreCase);
 
-			IList<object?> list =>
-				ReadArray(list, context),
+        foreach (DictionaryEntry pair in document)
+        {
+            if (pair.Key is not string name || string.IsNullOrWhiteSpace(name))
+            {
+                throw new InvalidDataException("YAML object field names must be non-empty strings.");
+            }
 
-			_ => DefValue.ScalarValue(
-				ConvertScalar(value))
-		};
-	}
+            if (!values.TryAdd(name, ReadValue(pair.Value, context)))
+            {
+                Issues.Add(DefIssues.DuplicateField(context.PackageId, context.ResourcePath, name));
+            }
+        }
 
-	private DefValue ReadObject(
-		Dictionary<string, object?> document,
-		DefReadContext context)
-	{
-		var values = new Dictionary<string, DefValue>(
-			StringComparer.OrdinalIgnoreCase);
+        return DefValue.ObjectValue(values);
+    }
 
-		foreach (var pair in document) values[pair.Key] = ReadValue(pair.Value, context);
+    private DefValue ReadArray(IList array, DefReadContext context)
+    {
+        var values = new DefValue[array.Count];
 
-		return DefValue.ObjectValue(values);
-	}
+        for (var i = 0; i < array.Count; i++)
+        {
+            values[i] = ReadValue(array[i], context);
+        }
 
-	private DefValue ReadArray(
-		IList<object?> array,
-		DefReadContext context)
-	{
-		var values = new DefValue[array.Count];
+        return DefValue.ListValue(values);
+    }
 
-		for (var i = 0; i < array.Count; i++) values[i] = ReadValue(array[i], context);
-
-		return DefValue.ListValue(values);
-	}
-
-	private static string ConvertScalar(object value)
-	{
-		return value switch
-		{
-			bool boolean =>
-				boolean.ToString(),
-
-			IFormattable formattable =>
-				formattable.ToString(
-					null,
-					CultureInfo.InvariantCulture),
-
-			_ =>
-				value.ToString() ?? string.Empty
-		};
-	}
+    private static string ConvertScalar(object value)
+    {
+        return value switch
+        {
+            bool boolean => boolean.ToString(),
+            IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+            _ => value.ToString() ?? string.Empty
+        };
+    }
 }
