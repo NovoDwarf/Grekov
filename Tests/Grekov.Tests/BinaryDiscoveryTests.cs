@@ -1,60 +1,20 @@
-using Grekov.Abstractions.Interfaces.Packaging;
-using Grekov.Binary;
-using Grekov.Extensions;
-using Microsoft.Extensions.DependencyInjection;
+using Grekov.Tests.Shared.Packaging;
 
 namespace Grekov.Tests;
 
-public sealed class BinaryDiscoveryTests
+[Trait("Category", "Integration")]
+public sealed class BinaryDiscoveryTests : BinaryDiscoveryTestBase
 {
     [Fact]
     public async Task FailedDiscoveryClosesPreviouslyOpenedArchives()
     {
-        // Arrange
-        var directory = Path.Combine(Path.GetTempPath(), $"grekov-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(directory);
-        var goodRoot = Path.Combine(directory, "good");
-        var badRoot = Path.Combine(directory, "bad");
-        Directory.CreateDirectory(goodRoot);
-        Directory.CreateDirectory(badRoot);
-        var manifest = Path.Combine(directory, "manifest.json");
-        var archivePath = Path.Combine(goodRoot, "valid.gpak");
+        // Arrange: the fixture provides a valid archive followed by a corrupt one.
 
-        try
-        {
-            await File.WriteAllTextAsync(manifest, """{"Id":"valid","Version":"1.0"}""");
-            await using (var output = File.Create(archivePath))
-            {
-                new GpakWriter().Write(output, new GpakPackage { Manifest = new GpakFile(manifest, "manifest.json") });
-            }
+        // Act
+        var exception = await Record.ExceptionAsync(async () => await PackageProvider.DiscoverAsync());
 
-            var services = new ServiceCollection();
-            
-            services.AddGrekov(builder =>
-            {
-                builder.Storage(storage => storage.InMemory());
-                builder.Readers(readers => readers.Json());
-                builder.Providers(providers => providers.Binary(options => options.Roots.AddRange([goodRoot, badRoot])));
-            });
-
-            await using var provider = services.BuildServiceProvider();
-            var packages = provider.GetServices<IPackageProvider>().Single();
-            var discovered = await packages.DiscoverAsync();
-            
-            discovered.Single().Dispose();
-          
-            await File.WriteAllTextAsync(Path.Combine(badRoot, "invalid.gpak"), "invalid");
-
-            // Act
-            var exception = await Record.ExceptionAsync(async () => await packages.DiscoverAsync());
-
-            // Assert
-            Assert.NotNull(exception);
-            await using var exclusive = File.Open(archivePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-        }
-        finally
-        {
-            Directory.Delete(directory, recursive: true);
-        }
+        // Assert
+        Assert.NotNull(exception);
+        await using var exclusive = File.Open(ArchivePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
     }
 }

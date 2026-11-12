@@ -15,4 +15,7 @@
       <PackageReference Include="Newtonsoft.Json" Version="14.0.1-beta2" />
     </ItemGroup>
 
+    <ItemGroup>
+        <InternalsVisibleTo Include="Grekov.Tests.Shared" />
+    </ItemGroup>
 </Project>

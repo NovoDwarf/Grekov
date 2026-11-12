@@ -1,20 +1,16 @@
-using Grekov.Tests.Shared.Definitions;
 using Grekov.Abstractions;
-using Grekov.Abstractions.Interfaces.Definitions;
-using Grekov.Definitions.Conversions;
-using Grekov.Definitions.Registry;
-using Microsoft.Extensions.DependencyInjection;
+using Grekov.Tests.Shared.Definitions;
 
 namespace Grekov.Tests;
 
-public sealed class DefConversionTests
+[Trait("Category", "Unit")]
+public sealed class DefConversionTests(ConversionFixture fixture) : IClassFixture<ConversionFixture>
 {
     [Fact]
     public void ConvertsHashSetAndRemovesDuplicates()
     {
         // Arrange
-        using var services = new ServiceCollection().BuildServiceProvider();
-        var converter = new DefValueConverter(new DefValueConverterRegistry(services));
+        var converter = fixture.CreateConverter();
         var value = DefValue.ListValue([DefValue.ScalarValue("3"), DefValue.ScalarValue("3")]);
 
         // Act
@@ -29,10 +25,7 @@ public sealed class DefConversionTests
     public void UsesPackageConverterBeforeObjectFallback()
     {
         // Arrange
-        using var services = new ServiceCollection().BuildServiceProvider();
-        var registry = new DefValueConverterRegistry(services);
-        registry.Refresh([typeof(PayloadConverter).Assembly]);
-        var converter = new DefValueConverter(registry);
+        var converter = fixture.CreateConverter(includePackageConverters: true);
         var value = DefValue.ObjectValue(new Dictionary<string, DefValue>());
 
         // Act

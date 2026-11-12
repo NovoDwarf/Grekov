@@ -1,16 +1,8 @@
 using Grekov.Tests.Shared.Assemblies;
-using Grekov.Tests.Shared.Packaging;
-using System.Runtime.Loader;
-using Grekov;
-using Grekov.Abstractions;
-using Grekov.Abstractions.Interfaces.Assemblies;
-using Grekov.Assemblies.Services;
-using Grekov.Defaults;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace Grekov.Tests;
 
+[Trait("Category", "Unit")]
 public sealed class EntrypointTests
 {
     [Theory]
@@ -20,26 +12,16 @@ public sealed class EntrypointTests
     {
         // Arrange
         var state = new EntrypointState { FailLoad = loading, FailUnload = !loading, FailDispose = true };
-        await using var services = new ServiceCollection().AddSingleton(state).BuildServiceProvider();
-       
-        var registry = new AssemblyRegistry(Options.Create(new GrekovOptions()));
-        
-        registry.Add("test", typeof(TestEntrypoint).Assembly, AssemblyLoadContext.Default);
-        
-        var service = new EntrypointService(registry, services, new DefaultContextFactory(services, registry));
-        var packages = new[] { new PackageInstance
-        {
-            Id = "test", Version = "1.0", Dependencies = [], Container = new TestPackageContainer()
-        } };
+        await using var context = new EntrypointTestContext(state);
 
         if (!loading)
         {
-            await service.LoadAsync(packages);
+            await context.Service.LoadAsync(context.Packages);
         }
 
         // Act
         var exception = await Record.ExceptionAsync(() => loading
-            ? service.LoadAsync(packages) : service.UnloadAsync(packages));
+            ? context.Service.LoadAsync(context.Packages) : context.Service.UnloadAsync(context.Packages));
 
         // Assert
         var failure = Assert.IsType<AggregateException>(exception);
@@ -52,24 +34,13 @@ public sealed class EntrypointTests
     public async Task AwaitsAsynchronousDisposal()
     {
         // Arrange
-        var state = new EntrypointState();
-        await using var services = new ServiceCollection().AddSingleton(state).BuildServiceProvider();
-        var registry = new AssemblyRegistry(Options.Create(new GrekovOptions()));
-        
-        registry.Add("test", typeof(TestEntrypoint).Assembly, AssemblyLoadContext.Default);
-       
-        var service = new EntrypointService(registry, services, new DefaultContextFactory(services, registry));
-        var packages = new[] { new PackageInstance
-        {
-            Id = "test", Version = "1.0", Dependencies = [], Container = new TestPackageContainer()
-        } };
-        
-        await service.LoadAsync(packages);
+        await using var context = new EntrypointTestContext();
+        await context.Service.LoadAsync(context.Packages);
 
         // Act
-        await service.UnloadAsync(packages);
+        await context.Service.UnloadAsync(context.Packages);
 
         // Assert
-        Assert.True(state.Disposed);
+        Assert.True(context.State.Disposed);
     }
 }

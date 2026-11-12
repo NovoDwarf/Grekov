@@ -4,6 +4,7 @@ using Grekov.Packaging.Services;
 
 namespace Grekov.Tests;
 
+[Trait("Category", "Unit")]
 public sealed class PackageGraphTests
 {
     [Theory]
@@ -12,8 +13,8 @@ public sealed class PackageGraphTests
     public void RejectsUnavailableDependencyChains(bool disabled)
     {
         // Arrange
-        var a = Package("a", "b");
-        var b = Package("b", "missing");
+        var a = PackageTestData.Create("a", dependencies: [new PackageDependency { PackageId = "b" }]);
+        var b = PackageTestData.Create("b", dependencies: [new PackageDependency { PackageId = "missing" }]);
         b.Enabled = !disabled;
         var packages = new[] { a, b };
 
@@ -30,8 +31,8 @@ public sealed class PackageGraphTests
     public void RejectsEntireCycle()
     {
         // Arrange
-        var a = Package("a", "b");
-        var b = Package("b", "a");
+        var a = PackageTestData.Create("a", dependencies: [new PackageDependency { PackageId = "b" }]);
+        var b = PackageTestData.Create("b", dependencies: [new PackageDependency { PackageId = "a" }]);
 
         // Act
         var result = PackageGraph.TopologicalSort([a, b], _ => null);
@@ -43,18 +44,13 @@ public sealed class PackageGraphTests
     }
 
     [Theory]
-    [InlineData("1.0", "2.0", PackageDependencyOperator.Exact, false)]
-    [InlineData("2.0", "2.0.0", PackageDependencyOperator.Exact, true)]
-    [InlineData("2.1", "2.0", PackageDependencyOperator.AtLeast, true)]
-    [InlineData("2.0-rc.1", "2.0", PackageDependencyOperator.AtLeast, false)]
-    [InlineData("2.0-rc.10", "2.0-rc.2", PackageDependencyOperator.AtLeast, true)]
-    [InlineData("invalid", "2.0", PackageDependencyOperator.AtLeast, false)]
+    [ClassData(typeof(PackageVersionCases))]
     public void EnforcesVersions(string actual, string required, PackageDependencyOperator op, bool valid)
     {
         // Arrange
-        var a = new PackageInstance { Id = "a", Version = "1.0", Container = new TestPackageContainer(),
-            Dependencies = [new PackageDependency { PackageId = "b", Version = required, Operator = op }] };
-        var b = new PackageInstance { Id = "b", Version = actual, Dependencies = [], Container = new TestPackageContainer() };
+        var dependency = new PackageDependency { PackageId = "b", Version = required, Operator = op };
+        var a = PackageTestData.Create("a", dependencies: [dependency]);
+        var b = PackageTestData.Create("b", actual);
 
         // Act
         var result = PackageGraph.TopologicalSort([a, b], _ => null);
@@ -62,10 +58,4 @@ public sealed class PackageGraphTests
         // Assert
         Assert.Equal(valid, result.Contains(a));
     }
-
-    private static PackageInstance Package(string id, string dependency) => new()
-    {
-        Id = id, Version = "1.0", Dependencies = [new PackageDependency { PackageId = dependency }],
-        Container = new TestPackageContainer()
-    };
 }

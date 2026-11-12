@@ -1,15 +1,12 @@
-using Grekov.Tests.Shared.Definitions;
-using System.Text;
 using Grekov.Abstractions;
 using Grekov.Abstractions.Enums;
-using Grekov.Definitions.Registry;
-using Grekov.Readers.Json;
-using Microsoft.Extensions.DependencyInjection;
-using NovoDwarf.FS.Extensions;
+using Grekov.Tests.Shared.Definitions;
+using Grekov.Tests.Shared.Readers;
 
 namespace Grekov.Readers.Tests;
 
-public sealed class DefJsonReaderTests
+[Trait("Category", "Unit")]
+public sealed class DefJsonReaderTests(JsonReaderFixture fixture) : IClassFixture<JsonReaderFixture>
 {
     [Fact]
     public void ReadsStructuralStringValuesWithoutChangingFieldTokens()
@@ -28,7 +25,7 @@ public sealed class DefJsonReaderTests
             """;
 
         // Act
-        var (definitions, issues) = Read(json);
+        var (definitions, issues) = fixture.Read(json);
 
         // Assert
         var definition = Assert.Single(definitions);
@@ -51,49 +48,39 @@ public sealed class DefJsonReaderTests
             """;
 
         // Act
-        var (definitions, issues) = Read(json);
+        var (definitions, issues) = fixture.Read(json);
 
         // Assert
         Assert.Equal(DefId.Parse("parent"), Assert.Single(definitions).ParentId);
         Assert.Empty(issues);
     }
 
+    [Fact]
+    public void ReadingValidInputDoesNotReusePreviousDiagnostics()
+    {
+        // Arrange
+        fixture.Read("""{"$type":12,"Id":"invalid"}""");
+        const string json = """{"$type":"Sample","Id":"valid"}""";
+
+        // Act
+        var (definitions, issues) = fixture.Read(json);
+
+        // Assert
+        Assert.Equal(DefId.Parse("valid"), Assert.Single(definitions).Id);
+        Assert.Empty(issues);
+    }
+
     [Theory]
-    [InlineData("{\"$type\":12,\"Id\":\"sample\"}", "definition.property.type.invalid")]
-    [InlineData("{\"$type\":{},\"Id\":\"sample\"}", "definition.property.type.invalid")]
-    [InlineData("{\"$type\":\"Sample\",\"Id\":12}", "definition.id.invalid")]
-    [InlineData("{\"$type\":\"Sample\",\"Id\":[]}", "definition.id.invalid")]
+    [ClassData(typeof(InvalidJsonStructuralCases))]
     public void InvalidStructuralTypesAreStillRejected(string json, string code)
     {
         // Arrange: json and code are supplied by the theory.
 
         // Act
-        var (definitions, issues) = Read(json);
+        var (definitions, issues) = fixture.Read(json);
 
         // Assert
         Assert.Empty(definitions);
         Assert.Contains(issues, issue => issue.Code == code);
-    }
-
-    private static (IReadOnlyList<DefRaw> Definitions, IReadOnlyList<DefIssue> Issues) Read(string json)
-    {
-        var services = new ServiceCollection();
-        
-        services.AddFileSystemServices();
-        
-        using var provider = services.BuildServiceProvider();
-       
-        var types = new DefTypeRegistry();
-       
-        types.Refresh([typeof(JsonSampleDef).Assembly]);
-       
-        var issues = new DefIssueRegistry();
-        var reader = ActivatorUtilities.CreateInstance<DefJsonReader>(provider, types, issues);
-       
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        
-        var definitions = reader.ReadDefinitions(stream, new DefReadContext("test", "Sample.json", "sample", []));
-        
-        return (definitions, issues.GetIssues("test"));
     }
 }

@@ -15,4 +15,7 @@
     <ItemGroup>
         <InternalsVisibleTo Include="Grekov.Tests" />
     </ItemGroup>
+    <ItemGroup>
+        <InternalsVisibleTo Include="Grekov.Tests.Shared" />
+    </ItemGroup>
 </Project>
