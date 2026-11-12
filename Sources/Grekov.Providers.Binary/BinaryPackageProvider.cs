@@ -15,23 +15,25 @@ internal sealed class BinaryPackageProvider : IPackageProvider
 
     private readonly string[] _roots;
 
+    private readonly IFileSearcher _fileSearcher;
     private readonly IDirectoryReader _directoryReader;
     private readonly IFileStreamer _fileStreamer;
     private readonly IDefReaderRegistry _readerRegistry;
 
     private readonly GpakReader _reader;
-    
+
     public BinaryPackageProvider(
         IOptions<BinaryOptions> options,
-        IDirectoryReader directoryReader,
+        IFileSearcher fileSearcher,
         IFileStreamer fileStreamer,
         IDefReaderRegistry readerRegistry,
-        GpakReader reader)
+        GpakReader reader, IDirectoryReader directoryReader)
     {
         _roots = [.. options.Value.Roots];
 
-        _directoryReader = directoryReader;
+        _fileSearcher = fileSearcher;
         _reader = reader;
+        _directoryReader = directoryReader;
         _readerRegistry = readerRegistry;
         _fileStreamer = fileStreamer;
     }
@@ -40,14 +42,40 @@ internal sealed class BinaryPackageProvider : IPackageProvider
     {
         List<PackageInstance> packages = [];
 
-        foreach (var root in _roots)
+        try
         {
+            foreach (var root in _roots)
+            {
+                token.ThrowIfCancellationRequested();
+                DiscoverRoot(root, packages, token);
+            }
+
             token.ThrowIfCancellationRequested();
-
-            DiscoverRoot(root, packages, token);
+            return ValueTask.FromResult<IReadOnlyList<PackageInstance>>(packages);
         }
+        catch (Exception failure)
+        {
+            var errors = new List<Exception> { failure };
 
-        return ValueTask.FromResult<IReadOnlyList<PackageInstance>>(packages);
+            foreach (var package in packages)
+            {
+                try
+                {
+                    package.Dispose();
+                }
+                catch (Exception cleanupFailure)
+                {
+                    errors.Add(cleanupFailure);
+                }
+            }
+
+            if (errors.Count > 1)
+            {
+                throw new AggregateException("Package discovery and cleanup failed.", errors);
+            }
+
+            throw;
+        }
     }
 
     private void DiscoverRoot(string root, ICollection<PackageInstance> packages, CancellationToken token)
@@ -55,7 +83,7 @@ internal sealed class BinaryPackageProvider : IPackageProvider
         if (!_directoryReader.Exists(root))
             return;
 
-        foreach (var path in _directoryReader.EnumerateFiles(root, Extension))
+        foreach (var path in _fileSearcher.EnumerateFiles(root, Extension))
         {
             token.ThrowIfCancellationRequested();
             packages.Add(ReadPackage(path));

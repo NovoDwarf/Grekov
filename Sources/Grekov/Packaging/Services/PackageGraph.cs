@@ -66,13 +66,26 @@ internal static class PackageGraph
 
                 var dependencyPackage = ResolveDependency(dependency.PackageId);
 
-                if (dependencyPackage is null)
+                if (dependencyPackage is null || !dependencyPackage.Enabled || dependencyPackage.HasErrors)
                 {
                     package.AddIssue(PackageIssue.MissingDependencyIssue(dependency.PackageId));
                     continue;
                 }
 
+                if (!PackageVersionComparer.Satisfies(dependencyPackage.Version, dependency))
+                {
+                    package.AddIssue(new PackageIssue(
+                        Grekov.Abstractions.Enums.PackageIssueSeverity.Error,
+                        "dependency.version", $"Dependency [{dependency.PackageId}] version [{dependencyPackage.Version}] does not satisfy [{dependency.Operator} {dependency.Version}]."));
+                    continue;
+                }
+
                 Visit(dependencyPackage);
+
+                if (dependencyPackage.HasErrors)
+                {
+                    package.AddIssue(PackageIssue.MissingDependencyIssue(dependency.PackageId));
+                }
             }
         }
 

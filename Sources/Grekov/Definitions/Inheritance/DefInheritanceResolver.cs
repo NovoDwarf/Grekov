@@ -5,71 +5,76 @@ namespace Grekov.Definitions.Inheritance;
 
 internal sealed class DefInheritanceResolver
 {
-	private readonly DefRawIndex _rawIndex;
-	private readonly DefValueMerger _merger;
+    private readonly DefRawIndex _rawIndex;
+    private readonly DefValueMerger _merger;
 
-	private readonly Dictionary<DefId, DefRaw> _cache = [];
-	
-	public DefInheritanceResolver(DefRawIndex rawIndex, DefValueMerger merger)
-	{
-		_rawIndex = rawIndex;
-		_merger = merger;
-	}
+    private readonly Dictionary<DefId, DefRaw> _cache = [];
 
-	public DefRaw Resolve(DefRaw raw)
-	{
-		if (_cache.TryGetValue(raw.Id, out var cached))
-			return cached;
+    public DefInheritanceResolver(DefRawIndex rawIndex, DefValueMerger merger)
+    {
+        _rawIndex = rawIndex;
+        _merger = merger;
+    }
 
-		var resolving = new HashSet<DefId>();
-		var resolved = ResolveInternal(raw, resolving);
+    public void Clear()
+    {
+        _cache.Clear();
+    }
 
-		_cache[raw.Id] = resolved;
+    public DefRaw Resolve(DefRaw raw)
+    {
+        if (_cache.TryGetValue(raw.Id, out var cached))
+            return cached;
 
-		return resolved;
-	}
-	
-	private DefRaw ResolveInternal(DefRaw raw, HashSet<DefId> resolving)
-	{
-		if (_cache.TryGetValue(raw.Id, out var cached))
-			return cached;
+        var resolving = new HashSet<DefId>();
+        var resolved = ResolveInternal(raw, resolving);
 
-		if (!resolving.Add(raw.Id))
-		{
-			var chain = string.Join(" -> ", resolving.Append(raw.Id));
-			throw new InvalidOperationException($"Circular definition inheritance detected: {chain}.");
-		}
+        _cache[raw.Id] = resolved;
 
-		try
-		{
-			if (raw.ParentId is not { } parentId)
-			{
-				_cache[raw.Id] = raw;
-				return raw;
-			}
+        return resolved;
+    }
 
-			var parent = _rawIndex.Get(parentId);
-			var resolvedParent = ResolveInternal(parent, resolving);
+    private DefRaw ResolveInternal(DefRaw raw, HashSet<DefId> resolving)
+    {
+        if (_cache.TryGetValue(raw.Id, out var cached))
+            return cached;
 
-			var mergedFields = _merger.Merge(resolvedParent.Fields, raw.Fields);
+        if (!resolving.Add(raw.Id))
+        {
+            var chain = string.Join(" -> ", resolving.Append(raw.Id));
+            throw new InvalidOperationException($"Circular definition inheritance detected: {chain}.");
+        }
 
-			var result = new DefRaw
-			{
-				Id = raw.Id,
-				Type = raw.Type,
-				ParentId = raw.ParentId,
-				Fields = mergedFields,
-				PackageId = raw.PackageId,
-				ResourcePath = raw.ResourcePath
-			};
+        try
+        {
+            if (raw.ParentId is not { } parentId)
+            {
+                _cache[raw.Id] = raw;
+                return raw;
+            }
 
-			_cache[raw.Id] = result;
+            var parent = _rawIndex.Get(parentId);
+            var resolvedParent = ResolveInternal(parent, resolving);
 
-			return result;
-		}
-		finally
-		{
-			resolving.Remove(raw.Id);
-		}
-	}
+            var mergedFields = _merger.Merge(resolvedParent.Fields, raw.Fields);
+
+            var result = new DefRaw
+            {
+                Id = raw.Id,
+                Type = raw.Type,
+                ParentId = raw.ParentId,
+                Fields = mergedFields,
+                PackageId = raw.PackageId,
+                ResourcePath = raw.ResourcePath
+            };
+
+            _cache[raw.Id] = result;
+
+            return result;
+        }
+        finally
+        {
+            resolving.Remove(raw.Id);
+        }
+    }
 }

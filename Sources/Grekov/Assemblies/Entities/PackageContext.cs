@@ -8,27 +8,21 @@ namespace Grekov.Assemblies.Entities;
 public sealed class PackageContext : IPackageContext
 {
 	private readonly IServiceProvider _services;
-	private readonly IReadOnlyList<Assembly> _assemblies;
 
-	public PackageContext(
-		string packageId,
-		IPackageContainer container,
-		IServiceProvider services, 
-		IReadOnlyList<Assembly> assemblies)
+	public PackageContext(string packageId, IPackageContainer container, IServiceProvider services, IReadOnlyList<Assembly> assemblies)
 	{
-
-
 		PackageId = packageId;
 		Container = container;
+		Assemblies = assemblies;
+
 		_services = services;
-		_assemblies = assemblies;
 	}
 
 	public string PackageId { get; }
 
 	public IPackageContainer Container { get; }
 
-	public IReadOnlyList<Assembly> Assemblies => _assemblies;
+	public IReadOnlyList<Assembly> Assemblies { get; }
 
 	public T GetService<T>() where T : notnull
 	{

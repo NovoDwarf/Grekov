@@ -16,7 +16,7 @@ internal sealed class EntrypointService
 
     public EntrypointService(
         AssemblyRegistry assemblies,
-        IServiceProvider services, 
+        IServiceProvider services,
         IPackageContextFactory contextFactory)
     {
         _assemblies = assemblies;
@@ -24,22 +24,18 @@ internal sealed class EntrypointService
         _contextFactory = contextFactory;
     }
 
-    public Task LoadAsync(IReadOnlyList<PackageInstance> packages)
+    public async Task LoadAsync(IReadOnlyList<PackageInstance> packages)
     {
         foreach (var package in packages)
-            LoadPackage(package);
-
-        return Task.CompletedTask;
+            await LoadPackageAsync(package);
     }
-    
-    public Task UnloadAsync(IReadOnlyList<PackageInstance> packages)
+
+    public async Task UnloadAsync(IReadOnlyList<PackageInstance> packages)
     {
         foreach (var package in packages.Reverse())
-            UnloadPackage(package);
-
-        return Task.CompletedTask;
+            await UnloadPackageAsync(package);
     }
-    
+
     public Task NotifyLoadedAsync(IReadOnlyList<PackageInstance> packages)
     {
         foreach (var package in packages)
@@ -52,8 +48,8 @@ internal sealed class EntrypointService
 
         return Task.CompletedTask;
     }
-    
-    private void LoadPackage(PackageInstance package)
+
+    private async Task LoadPackageAsync(PackageInstance package)
     {
         if (_entrypoints.ContainsKey(package.Id))
             throw new InvalidOperationException($"Entrypoint for package [{package.Id}] is already loaded.");
@@ -72,14 +68,22 @@ internal sealed class EntrypointService
             entrypoint.OnLoad(context);
             _entrypoints.Add(package.Id, new LoadedEntrypoint(context, entrypoint));
         }
-        catch
+        catch (Exception failure)
         {
-            DisposeEntrypoint(entrypoint);
+            try
+            {
+                await DisposeEntrypointAsync(entrypoint);
+            }
+            catch (Exception cleanupFailure)
+            {
+                throw new AggregateException("Entrypoint loading and cleanup failed.", failure, cleanupFailure);
+            }
+
             throw;
         }
     }
 
-    private void UnloadPackage(PackageInstance package)
+    private async Task UnloadPackageAsync(PackageInstance package)
     {
         if (!_entrypoints.Remove(package.Id, out var loaded))
             return;
@@ -88,10 +92,21 @@ internal sealed class EntrypointService
         {
             loaded.Entrypoint.OnUnload();
         }
-        finally
+        catch (Exception failure)
         {
-            DisposeEntrypoint(loaded.Entrypoint);
+            try
+            {
+                await DisposeEntrypointAsync(loaded.Entrypoint);
+            }
+            catch (Exception cleanupFailure)
+            {
+                throw new AggregateException("Entrypoint unloading and cleanup failed.", failure, cleanupFailure);
+            }
+
+            throw;
         }
+
+        await DisposeEntrypointAsync(loaded.Entrypoint);
     }
 
     private IEntrypoint CreateEntrypoint(
@@ -145,14 +160,11 @@ internal sealed class EntrypointService
         }
     }
 
-    private static void DisposeEntrypoint(IEntrypoint entrypoint)
+    private static async ValueTask DisposeEntrypointAsync(IEntrypoint entrypoint)
     {
         if (entrypoint is IAsyncDisposable asyncDisposable)
         {
-            asyncDisposable.DisposeAsync()
-                .AsTask()
-                .GetAwaiter()
-                .GetResult();
+            await asyncDisposable.DisposeAsync();
 
             return;
         }

@@ -9,19 +9,20 @@ namespace Grekov.Providers.FileSystem;
 internal sealed class FileSystemPackageContainer : IPackageContainer
 {
     private readonly string _root;
-    
+
     private readonly IPathResolver _pathResolver;
     private readonly IPathCombiner _pathCombiner;
     private readonly IFileSearcher _fileSearcher;
+    private readonly IFileMetadata _fileMetadata;
     private readonly IFileStreamer _fileStreamer;
     private readonly IDirectoryReader _directoryReader;
 
     public FileSystemPackageContainer(string root,
-        IDirectoryReader directoryReader, 
-        IPathResolver pathResolver, 
-        IPathCombiner pathCombiner, 
+        IDirectoryReader directoryReader,
+        IPathResolver pathResolver,
+        IPathCombiner pathCombiner,
         IFileSearcher fileSearcher,
-        IFileStreamer fileStreamer)
+        IFileStreamer fileStreamer, IFileMetadata fileMetadata)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(root);
         ArgumentNullException.ThrowIfNull(directoryReader);
@@ -31,20 +32,21 @@ internal sealed class FileSystemPackageContainer : IPackageContainer
         _pathCombiner = pathCombiner;
         _fileSearcher = fileSearcher;
         _fileStreamer = fileStreamer;
+        _fileMetadata = fileMetadata;
 
         _root = _pathResolver.GetFullPath(root);
     }
 
     public bool Exists(PackageContentType type, string path)
     {
-        return _fileSearcher.Exists(GetFullPath(type, path));
+        return _fileMetadata.Exists(GetFullPath(type, path));
     }
 
     public Stream OpenRead(PackageContentType type, string path)
     {
         var fullPath = GetFullPath(type, path);
 
-        if (!_fileSearcher.Exists(fullPath))
+        if (!_fileMetadata.Exists(fullPath))
             throw new FileNotFoundException($"Package file [{path}] was not found.", fullPath);
 
         return _fileStreamer.OpenRead(fullPath);
@@ -60,9 +62,9 @@ internal sealed class FileSystemPackageContainer : IPackageContainer
         if (!_directoryReader.Exists(directory))
             return [];
 
-        return 
-        [.. 
-            _directoryReader
+        return
+        [..
+            _fileSearcher
                 .EnumerateFiles(directory, "*", SearchOption.AllDirectories)
                 .Select(file => _pathResolver.GetRelativePath(root, file))
         ];

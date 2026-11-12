@@ -15,28 +15,31 @@ internal sealed class FileSystemPackageProvider : IPackageProvider
     private readonly string _manifestName;
 
     private readonly IDirectoryReader _directoryReader;
+    private readonly IFileSearcher _fileSearcher;
 	private readonly IFileStreamer _fileStreamer;
     private readonly IPathParser _pathParser;
     private readonly IDefReaderRegistry _readerRegistry;
 
     private readonly FileSystemContentFactory _contentFactory;
-    
+
     public FileSystemPackageProvider(
         IOptions<GrekovOptions> grekovOptions,
         IOptions<FileSystemOptions> fileOptions,
         IDefReaderRegistry readerRegistry,
-        IDirectoryReader directoryReader,
+        IFileSearcher fileSearcher,
 		IFileStreamer fileStreamer,
         IPathParser pathParser,
-        FileSystemContentFactory contentFactory)
+        FileSystemContentFactory contentFactory,
+        IDirectoryReader directoryReader)
     {
         _manifestName = grekovOptions.Value.ManifestName;
         _roots = [.. fileOptions.Value.Roots];
 
         _contentFactory = contentFactory;
-        _readerRegistry = readerRegistry;
-        
         _directoryReader = directoryReader;
+        _readerRegistry = readerRegistry;
+
+        _fileSearcher = fileSearcher;
 		_fileStreamer = fileStreamer;
         _pathParser = pathParser;
     }
@@ -52,7 +55,7 @@ internal sealed class FileSystemPackageProvider : IPackageProvider
     {
         List<PackageInstance> packages = [];
 
-        foreach (var discovered in DiscoverManifests()) 
+        foreach (var discovered in DiscoverManifests())
             packages.Add(CreatePackage(discovered));
 
         return packages;
@@ -123,7 +126,7 @@ internal sealed class FileSystemPackageProvider : IPackageProvider
         {
             var manifestFileName = $"{_manifestName}{extension}";
 
-            foreach (var file in _directoryReader.EnumerateFiles(root, manifestFileName, SearchOption.AllDirectories))
+            foreach (var file in _fileSearcher.EnumerateFiles(root, manifestFileName, SearchOption.AllDirectories))
             {
                 yield return file;
             }
