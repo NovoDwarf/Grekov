@@ -29,6 +29,7 @@
     <Project Path="Tests/Fixtures/Grekov.TestPackage/Grekov.TestPackage.csproj" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="Tests/Grekov.Tests.Shared/Grekov.Tests.Shared.csproj" />
     <Project Path="Tests/Grekov.Tests/Grekov.Tests.csproj" />
     <Project Path="Tests/Grekov.Readers.Tests/Grekov.Readers.Tests.csproj" />
   </Folder>

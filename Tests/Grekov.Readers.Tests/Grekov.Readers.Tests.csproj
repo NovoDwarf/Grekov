@@ -28,4 +28,7 @@
       <ProjectReference Include="..\..\Sources\Grekov\Grekov.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="../Grekov.Tests.Shared/Grekov.Tests.Shared.csproj" />
+    </ItemGroup>
 </Project>

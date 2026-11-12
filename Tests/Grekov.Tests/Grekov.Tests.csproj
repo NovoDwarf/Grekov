@@ -29,4 +29,7 @@
         <ProjectReference Include="../../Sources/Grekov.Storages.Database/Grekov.Storages.Database.csproj" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
     </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="../Grekov.Tests.Shared/Grekov.Tests.Shared.csproj" />
+    </ItemGroup>
 </Project>

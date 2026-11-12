@@ -1,13 +1,7 @@
-using System.Runtime.Loader;
-using Grekov;
-using Grekov.Abstractions;
 using Grekov.Abstractions.Interfaces.Assemblies;
-using Grekov.Assemblies.Services;
-using Grekov.Defaults;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using Grekov.Abstractions.Interfaces.Packaging;
 
-namespace Grekov.Tests;
+namespace Grekov.Tests.Shared.Assemblies;
 
 public sealed class TestEntrypoint(EntrypointState state) : IEntrypoint, IAsyncDisposable
 {
@@ -19,7 +13,9 @@ public sealed class TestEntrypoint(EntrypointState state) : IEntrypoint, IAsyncD
         }
     }
 
-    public void OnLoaded() { }
+    public void OnLoaded()
+    {
+    }
 
     public void OnUnload()
     {

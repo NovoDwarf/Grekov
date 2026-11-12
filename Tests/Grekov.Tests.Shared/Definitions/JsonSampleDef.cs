@@ -1,7 +1,7 @@
 using Grekov.Abstractions;
 using Grekov.Abstractions.Attributes;
 
-namespace Grekov.Readers.Tests;
+namespace Grekov.Tests.Shared.Definitions;
 
 [DefType("Sample")]
 public sealed class JsonSampleDef : Def

@@ -1,3 +1,4 @@
+using Grekov.Tests.Shared.Definitions;
 using Grekov.Abstractions;
 using Grekov.Abstractions.Interfaces.Definitions;
 using Grekov.Definitions.Conversions;

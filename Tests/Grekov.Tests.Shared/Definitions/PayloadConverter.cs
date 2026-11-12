@@ -1,10 +1,7 @@
 using Grekov.Abstractions;
 using Grekov.Abstractions.Interfaces.Definitions;
-using Grekov.Definitions.Conversions;
-using Grekov.Definitions.Registry;
-using Microsoft.Extensions.DependencyInjection;
 
-namespace Grekov.Tests;
+namespace Grekov.Tests.Shared.Definitions;
 
 public sealed class PayloadConverter : IDefValueConverter
 {
