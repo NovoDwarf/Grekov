@@ -1,8 +1,9 @@
-﻿using Grekov.Definitions.Interfaces;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Attributes;
+using Grekov.Abstractions.Interfaces;
+using Grekov.Abstractions.Interfaces.Definitions;
+using Grekov.Abstractions.Interfaces.Packaging;
 using Grekov.Extensions;
-using Grekov.Packaging.Interfaces;
-using Grekov.Providers.Binary;
-using Grekov.Readers.Xml.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grekov.Example;
@@ -17,6 +18,8 @@ internal static class Program
 
         Console.WriteLine("=== DI ===");
 
+        services.AddLogging();
+
         await using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
 
         Console.WriteLine($"Registered services : {services.Count}");
@@ -28,7 +31,7 @@ internal static class Program
 
         Console.WriteLine("=== START ===");
 
-        await grekov.Start();
+        await grekov.StartAsync();
 
         Console.WriteLine("[OK] Grekov started.");
         Console.WriteLine();
@@ -45,7 +48,7 @@ internal static class Program
         Console.WriteLine();
         Console.WriteLine("=== STOP ===");
 
-        await grekov.Stop();
+        await grekov.StopAsync();
 
         Console.WriteLine("[OK] Grekov stopped.");
     }
@@ -54,9 +57,14 @@ internal static class Program
     {
         services.AddGrekov(grekov =>
         {
-            grekov.Configure(options => options.ManifestName = "Manifest");
+			grekov.Configure(options =>
+			{
+				options.ManifestName = "Manifest";
+				options.AdditionalAssemblies.Add(typeof(SwordDef).Assembly);
+			});
             grekov.Readers(readers => readers.Xml());
             grekov.Providers(providers => providers.FileSystem(opt => opt.Roots.Add(Path.Combine(AppContext.BaseDirectory, "Content", "Packages"))));
+			grekov.Storage(storage => storage.InMemory());
         });
     }
 
@@ -75,13 +83,13 @@ internal static class Program
             Console.WriteLine($"  {package.Id} " + $"v{package.Version}");
             Console.WriteLine($"      Enabled : {package.Enabled}");
             Console.WriteLine($"      Errors  : {package.HasErrors}");
-           
+
             if (package.Issues.Count <= 0)
                 continue;
-            
+
             Console.WriteLine("      Issues:");
 
-            foreach (var issue in package.Issues) 
+            foreach (var issue in package.Issues)
                 Console.WriteLine($"          {issue}");
         }
 
@@ -98,5 +106,17 @@ internal static class Program
     {
         Console.WriteLine($"Catalog: {catalog.GetType().Name}");
         Console.WriteLine("[OK] IDefCatalog resolved from DI.");
+
+        foreach (var definition in catalog.All<SwordDef>())
+        {
+            Console.WriteLine($"  Sword [{definition.Id}]: Damage = {definition.Damage}");
+        }
     }
+}
+
+[DefType("Sword")]
+public sealed class SwordDef : Def
+{
+	[DefField]
+	public int Damage { get; set; }
 }

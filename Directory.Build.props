@@ -1,5 +1,65 @@
 <Project>
-    
+
+    <!-- CORE -->
+
+    <PropertyGroup>
+        <GrekovVersion>1.2.0-dev3</GrekovVersion>
+        <GrekovAssemblyVersion>1.2.0.3</GrekovAssemblyVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GrekovAbstractionsVersion>1.2.0-dev3</GrekovAbstractionsVersion>
+        <GrekovAbstractionsAssemblyVersion>1.2.0.3</GrekovAbstractionsAssemblyVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GrekovReadersAbstractionsVersion>1.2.0-dev3</GrekovReadersAbstractionsVersion>
+        <GrekovReadersAbstractionsAssemblyVersion>1.2.0.3</GrekovReadersAbstractionsAssemblyVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GrekovBinaryVersion>1.2.0-dev3</GrekovBinaryVersion>
+        <GrekovBinaryAssemblyVersion>1.2.0.3</GrekovBinaryAssemblyVersion>
+    </PropertyGroup>
+
+    <!-- PROVIDERS -->
+
+    <PropertyGroup>
+        <GrekovProviderBinaryVersion>1.2.0-dev3</GrekovProviderBinaryVersion>
+        <GrekovProviderBinaryAssemblyVersion>1.2.0.3</GrekovProviderBinaryAssemblyVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GrekovProviderFSVersion>1.2.0-dev3</GrekovProviderFSVersion>
+        <GrekovProviderFSAssemblyVersion>1.2.0.3</GrekovProviderFSAssemblyVersion>
+    </PropertyGroup>
+
+    <!-- READERS -->
+
+    <PropertyGroup>
+        <GrekovReaderXmlVersion>1.2.0-dev3</GrekovReaderXmlVersion>
+        <GrekovReaderXmlAssemblyVersion>1.2.0.3</GrekovReaderXmlAssemblyVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GrekovReaderJsonVersion>$(GrekovVersion)</GrekovReaderJsonVersion>
+        <GrekovReaderJsonAssemblyVersion>$(GrekovAssemblyVersion)</GrekovReaderJsonAssemblyVersion>
+    </PropertyGroup>
+
+    <!-- STORAGES -->
+
+    <PropertyGroup>
+        <GrekovStorageInMemoryVersion>1.2.0-dev3</GrekovStorageInMemoryVersion>
+        <GrekovStorageInMemoryAssemblyVersion>1.2.0.3</GrekovStorageInMemoryAssemblyVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GrekovStorageDatabaseVersion>1.2.0-dev3</GrekovStorageDatabaseVersion>
+        <GrekovStorageDatabaseAssemblyVersion>1.2.0.3</GrekovStorageDatabaseAssemblyVersion>
+    </PropertyGroup>
+
+    <!-- PROPERTIES -->
+
     <PropertyGroup>
         <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
         <LangVersion>preview</LangVersion>
@@ -15,5 +75,5 @@
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
-    
+
 </Project>

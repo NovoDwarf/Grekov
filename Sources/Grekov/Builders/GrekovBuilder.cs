@@ -1,4 +1,3 @@
-using Grekov.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grekov.Builders;
@@ -40,6 +39,14 @@ public sealed class GrekovBuilder
 		
 		configure(builder);
 
+		return this;
+	}
+
+	public GrekovBuilder Storage(Action<GrekovStorageBuilder> configure)
+	{
+		ArgumentNullException.ThrowIfNull(configure);
+
+		configure(new GrekovStorageBuilder(Services));
 		return this;
 	}
 }

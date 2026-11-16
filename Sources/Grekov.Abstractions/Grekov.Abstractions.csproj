@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Version>$(GrekovAbstractionsVersion)</Version>
+        <AssemblyVersion>$(GrekovAbstractionsAssemblyVersion)</AssemblyVersion>
+        <FileVersion>$(GrekovAbstractionsAssemblyVersion)</FileVersion>
+    </PropertyGroup>
+
+</Project>

@@ -1,4 +1,4 @@
-using Grekov.Packaging.Interfaces;
+using Grekov.Abstractions.Interfaces.Packaging;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grekov.Providers.FileSystem;
@@ -12,8 +12,8 @@ internal sealed class FileSystemContentFactory
 		_services = services;
 	}
 
-	public IPackageContent Create(string root)
+	public IPackageContainer Create(string root)
 	{
-		return ActivatorUtilities.CreateInstance<FileSystemPackageContent>(_services, root);
+		return ActivatorUtilities.CreateInstance<FileSystemPackageContainer>(_services, root);
 	}
 }

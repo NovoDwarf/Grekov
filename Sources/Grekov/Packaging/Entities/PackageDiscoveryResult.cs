@@ -1,3 +1,5 @@
+using Grekov.Abstractions;
+
 namespace Grekov.Packaging.Entities;
 
 public sealed class PackageDiscoveryResult

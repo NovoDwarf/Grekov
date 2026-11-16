@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Version>$(GrekovStorageDatabaseVersion)</Version>
+        <AssemblyVersion>$(GrekovStorageDatabaseAssemblyVersion)</AssemblyVersion>
+        <FileVersion>$(GrekovStorageDatabaseAssemblyVersion)</FileVersion>
+    </PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Grekov\Grekov.csproj" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" />
+	</ItemGroup>
+    
+    <ItemGroup>
+        <InternalsVisibleTo Include="Grekov.Tests" />
+    </ItemGroup>
+    <ItemGroup>
+        <InternalsVisibleTo Include="Grekov.Tests.Shared" />
+    </ItemGroup>
+</Project>

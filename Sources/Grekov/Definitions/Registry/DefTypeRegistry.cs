@@ -1,6 +1,6 @@
 using System.Reflection;
-using Grekov.Core;
-using Grekov.Core.Attributes;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Attributes;
 
 namespace Grekov.Definitions.Registry;
 
@@ -8,6 +8,8 @@ public sealed class DefTypeRegistry
 {
     private readonly Dictionary<string, Type> _typesByName = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Type> _typesByElementName = new(StringComparer.OrdinalIgnoreCase);
+
+	public IReadOnlyCollection<Type> Types => [.. _typesByName.Values];
 
     public void Refresh(IEnumerable<Assembly> assemblies)
     {

@@ -1,16 +1,16 @@
 <Project>
 
     <PropertyGroup>
-        <LocalNugetRepository>F:\nugets</LocalNugetRepository>
+        <LocalNugetRepository Condition="'$(LocalNugetRepository)' == ''">F:\nugets</LocalNugetRepository>
         <NugetArtifacts>$(MSBuildProjectDirectory)\bin\$(Configuration)</NugetArtifacts>
     </PropertyGroup>
-    
-    <Target Name="PublishLocalNuget" AfterTargets="Build" Condition=" '$(IsPackable)' == 'true' and '$(Configuration)' == 'Debug' and '$(TargetFramework)' == 'net11.0'">
+
+    <Target Name="PublishLocalNuget" AfterTargets="Build" Condition=" '$(PublishLocalPackages)' == 'true' and '$(IsPackable)' == 'true' and '$(Configuration)' == 'Debug' and '$(TargetFramework)' == 'net11.0'">
 
         <PropertyGroup>
             <LocalPackageRepository>$(LocalNugetRepository)\$(PackageId)</LocalPackageRepository>
         </PropertyGroup>
-        
+
         <Message Text="Publishing $(PackageId) $(Version) to local NuGet repository..." Importance="High" />
 
         <MakeDir Directories="$(LocalPackageRepository)" />
@@ -21,7 +21,7 @@
             <LocalPackages Include="$(NugetArtifacts)\$(PackageId).$(Version).nupkg" />
             <LocalSymbols Include="$(NugetArtifacts)\$(PackageId).$(Version).snupkg" />
         </ItemGroup>
-        
+
         <Copy
                 SourceFiles="@(LocalPackages)"
                 DestinationFolder="$(LocalPackageRepository)"

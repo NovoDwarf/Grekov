@@ -1,4 +1,4 @@
-using Grekov.Packaging.Interfaces;
+using Grekov.Abstractions.Interfaces.Packaging;
 
 namespace Grekov.Defaults;
 

@@ -1,13 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <Version>1.2.0-dev1</Version>
-        <AssemblyVersion>1.2.0.1</AssemblyVersion>
-        <FileVersion>1.2.0.1</FileVersion>
+        <Version>$(GrekovReaderJsonVersion)</Version>
+        <AssemblyVersion>$(GrekovReaderJsonAssemblyVersion)</AssemblyVersion>
+        <FileVersion>$(GrekovReaderJsonAssemblyVersion)</FileVersion>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Grekov" Version="1.1.0-dev1" />
+        <ProjectReference Include="..\Grekov.Readers.Abstractions\Grekov.Readers.Abstractions.csproj" />
+        <ProjectReference Include="..\Grekov\Grekov.csproj" />
     </ItemGroup>
-    
+
+    <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="14.0.1-beta2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Grekov.Tests.Shared" />
+    </ItemGroup>
 </Project>

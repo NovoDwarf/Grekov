@@ -1,10 +1,10 @@
-using Grekov.Definitions.Interfaces;
-using Grekov.Definitions.Registry;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Definitions;
+using Grekov.Abstractions.Interfaces.Packaging;
 using Grekov.Extensions;
-using Grekov.Packaging.Entities;
-using Grekov.Packaging.Interfaces;
 using Microsoft.Extensions.Options;
 using NovoDwarf.FS.Directories.Interfaces;
+using NovoDwarf.FS.Files.Interfaces;
 using NovoDwarf.FS.Paths.Interfaces;
 
 namespace Grekov.Providers.FileSystem;
@@ -15,26 +15,32 @@ internal sealed class FileSystemPackageProvider : IPackageProvider
     private readonly string _manifestName;
 
     private readonly IDirectoryReader _directoryReader;
+    private readonly IFileSearcher _fileSearcher;
+	private readonly IFileStreamer _fileStreamer;
     private readonly IPathParser _pathParser;
     private readonly IDefReaderRegistry _readerRegistry;
 
     private readonly FileSystemContentFactory _contentFactory;
-    
+
     public FileSystemPackageProvider(
         IOptions<GrekovOptions> grekovOptions,
         IOptions<FileSystemOptions> fileOptions,
         IDefReaderRegistry readerRegistry,
-        IDirectoryReader directoryReader,
+        IFileSearcher fileSearcher,
+		IFileStreamer fileStreamer,
         IPathParser pathParser,
-        FileSystemContentFactory contentFactory)
+        FileSystemContentFactory contentFactory,
+        IDirectoryReader directoryReader)
     {
         _manifestName = grekovOptions.Value.ManifestName;
         _roots = [.. fileOptions.Value.Roots];
 
         _contentFactory = contentFactory;
-        _readerRegistry = readerRegistry;
-        
         _directoryReader = directoryReader;
+        _readerRegistry = readerRegistry;
+
+        _fileSearcher = fileSearcher;
+		_fileStreamer = fileStreamer;
         _pathParser = pathParser;
     }
 
@@ -49,7 +55,7 @@ internal sealed class FileSystemPackageProvider : IPackageProvider
     {
         List<PackageInstance> packages = [];
 
-        foreach (var discovered in DiscoverManifests()) 
+        foreach (var discovered in DiscoverManifests())
             packages.Add(CreatePackage(discovered));
 
         return packages;
@@ -64,15 +70,19 @@ internal sealed class FileSystemPackageProvider : IPackageProvider
             Id = manifest.Id,
             Version = manifest.Version,
             Dependencies = manifest.Dependencies,
-            Content = _contentFactory.Create(discovered.ManifestPath)
+			Container = _contentFactory.Create(discovered.Directory)
         };
     }
 
     private IEnumerable<DiscoveredManifest> DiscoverManifests()
     {
         foreach (var manifestFile in DiscoverManifestFiles())
-        {
-            var manifest = manifestFile.Reader.ReadManifest(manifestFile.ManifestPath);
+		{
+			using var stream = _fileStreamer.OpenRead(manifestFile.ManifestPath);
+			var manifest = manifestFile.Reader.ReadManifest(stream);
+
+			if (string.IsNullOrWhiteSpace(manifest.Id))
+				manifest.Id = manifestFile.Directory;
 
             yield return new DiscoveredManifest(manifestFile.Directory, manifestFile.ManifestPath, manifest);
         }
@@ -116,7 +126,7 @@ internal sealed class FileSystemPackageProvider : IPackageProvider
         {
             var manifestFileName = $"{_manifestName}{extension}";
 
-            foreach (var file in _directoryReader.EnumerateFiles(root, manifestFileName, SearchOption.AllDirectories))
+            foreach (var file in _fileSearcher.EnumerateFiles(root, manifestFileName, SearchOption.AllDirectories))
             {
                 yield return file;
             }

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>false</IsTestProject>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../../Sources/Grekov.Abstractions/Grekov.Abstractions.csproj" />
+        <ProjectReference Include="../../Sources/Grekov/Grekov.csproj" />
+        <ProjectReference Include="../../Sources/Grekov.Readers.Json/Grekov.Readers.Json.csproj" />
+        <ProjectReference Include="../../Sources/Grekov.Providers.Binary/Grekov.Providers.Binary.csproj" />
+        <ProjectReference Include="../../Sources/Grekov.Storages.InMemory/Grekov.Storages.InMemory.csproj" />
+        <ProjectReference Include="../../Sources/Grekov.Storages.Database/Grekov.Storages.Database.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.1.26425.128" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
+        <PackageReference Include="xunit" Version="2.9.3" />
+    </ItemGroup>
+    <ItemGroup>
+        <InternalsVisibleTo Include="Grekov.Tests" />
+    </ItemGroup>
+</Project>

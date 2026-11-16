@@ -1,8 +1,6 @@
-using Grekov.Definitions.Interfaces;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Definitions;
 using Grekov.Localizations.Entities;
-using Grekov.Packaging;
-using Grekov.Packaging.Entities;
-using Grekov.Packaging.Interfaces;
 
 namespace Grekov.Localizations.Services;
 
@@ -19,7 +17,7 @@ internal sealed class LocalizationService
 		_translations = translations;
 	}
 
-	public async Task Load(IReadOnlyList<PackageInstance> packages)
+	public async Task LoadAsync(IReadOnlyList<PackageInstance> packages)
 	{
 		foreach (var package in packages)
 		{
@@ -30,7 +28,7 @@ internal sealed class LocalizationService
 		}
 	}
 
-	public async Task Unload(IReadOnlyList<PackageInstance> packages)
+	public async Task UnloadAsync(IReadOnlyList<PackageInstance> packages)
 	{
 		foreach (var package in packages.Reverse())
 		{

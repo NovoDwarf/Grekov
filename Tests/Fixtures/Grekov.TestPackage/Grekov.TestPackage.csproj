@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../../../Sources/Grekov.Abstractions/Grekov.Abstractions.csproj" />
+        <ProjectReference Include="../Grekov.TestDependency/Grekov.TestDependency.csproj" />
+    </ItemGroup>
+</Project>

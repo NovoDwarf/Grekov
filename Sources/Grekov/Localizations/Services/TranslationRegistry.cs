@@ -1,5 +1,5 @@
+using Grekov.Abstractions.Interfaces.Localizations;
 using Grekov.Localizations.Entities;
-using Grekov.Localizations.Interfaces;
 
 namespace Grekov.Localizations.Services;
 

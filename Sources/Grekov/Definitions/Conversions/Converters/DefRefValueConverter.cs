@@ -1,5 +1,5 @@
-using Grekov.Core;
-using Grekov.Definitions.Interfaces;
+using Grekov.Abstractions;
+using Grekov.Abstractions.Interfaces.Definitions;
 
 namespace Grekov.Definitions.Conversions.Converters;
 
@@ -12,10 +12,9 @@ internal sealed class DefRefValueConverter : IDefValueConverter
 		return DefValueConversion.IsScalar(value) && IsDefRef(actualType);
 	}
 
-	public object Convert(DefValue value, Type targetType)
+	public object? Convert(DefValue value, Type targetType, IDefConverter converter)
 	{
 		var actualType = DefValueConversion.UnwrapNullable(targetType);
-
 		var text = DefValueConversion.ToInvariantString(value.Scalar!);
 		var id = DefId.Parse(text);
 

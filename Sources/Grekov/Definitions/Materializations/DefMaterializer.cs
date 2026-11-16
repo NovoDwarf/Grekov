@@ -1,6 +1,4 @@
-using Grekov.Core;
-using Grekov.Definitions.Models;
-using Grekov.Definitions.Registry;
+using Grekov.Abstractions;
 
 namespace Grekov.Definitions.Materializations;
 
@@ -17,8 +15,6 @@ internal sealed class DefMaterializer
 
 	public Def Materialize(DefRaw raw)
 	{
-		ArgumentNullException.ThrowIfNull(raw);
-
 		var definition = _factory.Create(raw.Type, raw);
 
 		_fields.Apply(definition, raw.Fields);

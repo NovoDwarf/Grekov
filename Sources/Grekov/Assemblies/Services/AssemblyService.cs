@@ -1,68 +1,92 @@
+using System.Runtime.Loader;
+using Grekov.Abstractions;
 using Grekov.Assemblies.Entities;
-using Grekov.Defaults;
-using Grekov.Packaging;
-using Grekov.Packaging.Entities;
-using Grekov.Packaging.Enums;
-using Grekov.Packaging.Interfaces;
-using NovoDwarf.FS.Paths.Interfaces;
 
 namespace Grekov.Assemblies.Services;
 
 internal sealed class AssemblyService
 {
-	private readonly AssemblyRegistry _registry;
-	private readonly IPathParser _pathParser;
+    private readonly AssemblyRegistry _registry;
 
-	public AssemblyService(AssemblyRegistry registry, IPathParser pathParser)
-	{
-		_registry = registry;
-		_pathParser = pathParser;
-	}
+    public AssemblyService(AssemblyRegistry registry)
+    {
+        _registry = registry;
+    }
 
-	public async Task Load(IReadOnlyList<PackageInstance> packages, CancellationToken token = default)
-	{
-		foreach (var package in packages)
-		foreach (var path in Locate(package))
-		{
-			LoadAssembly(package.Id, path);
-		}
-	}
+    public Task LoadAsync(IReadOnlyList<PackageInstance> packages, CancellationToken token = default)
+    {
+        foreach (var package in packages)
+        {
+            token.ThrowIfCancellationRequested();
+            var paths = Locate(package);
 
-	public async Task Unload(IReadOnlyList<PackageInstance> packages, CancellationToken token = default)
-	{
-		foreach (var package in packages.Reverse())
-		{
-			_registry.RemovePackage(package.Id);
-		}
-	}
+            if (paths.Count == 0)
+            {
+                continue;
+            }
 
-	public void Clear()
-	{
-		_registry.Clear();
-	}
+            var loadContext = new EntrypointLoadContext(package, paths);
+            var registered = false;
 
-	public IReadOnlyList<string> Locate(PackageInstance package)
-	{
-		ArgumentNullException.ThrowIfNull(package);
+            try
+            {
+                foreach (var path in paths)
+                {
+                    token.ThrowIfCancellationRequested();
+                    var assembly = loadContext.LoadAssembly(path);
 
-		return package.Content.EnumerateFiles(PackageContentType.Assembly);
-	}
-	
-	private void LoadAssembly(string packageId, string path)
-	{
-		var filename = _pathParser.GetFileNameWithoutExtension(path);
-		var loadContext = new EntrypointLoadContext(path, packageId, filename);
+                    if (AssemblyLoadContext.GetLoadContext(assembly) == loadContext)
+                    {
+                        _registry.Add(package.Id, assembly, loadContext);
+                        registered = true;
+                    }
+                }
 
-		try
-		{
-			var assembly = loadContext.LoadFromAssemblyPath(path);
+                if (!registered)
+                {
+                    loadContext.Unload();
+                }
+            }
+            catch
+            {
+                if (registered)
+                {
+                    _registry.RemovePackage(package.Id);
+                }
+                else
+                {
+                    loadContext.Unload();
+                }
 
-			_registry.Add(packageId, assembly, loadContext);
-		}
-		catch
-		{
-			loadContext.Unload();
-			throw;
-		}
-	}
+                throw;
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task UnloadAsync(IReadOnlyList<PackageInstance> packages, CancellationToken token = default)
+    {
+        foreach (var package in packages.Reverse())
+        {
+            token.ThrowIfCancellationRequested();
+            _registry.RemovePackage(package.Id);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public void Clear()
+    {
+        _registry.Clear();
+    }
+
+    public IReadOnlyList<string> Locate(PackageInstance package)
+    {
+        ArgumentNullException.ThrowIfNull(package);
+
+        return package.Container.EnumerateFiles(PackageContentType.Assembly)
+            .Where(static path => string.Equals(Path.GetExtension(path), ".dll", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+    }
 }
